@@ -1,0 +1,61 @@
+# This is the main configuration file for Transport Analyst server/UI component.
+
+# The path to your Stormpath apiKey.properties file
+auth.stormpath-config=<path/to/apiKey.properties>
+# The name of your stormpath application.
+# The Stormpath app name is also used as a prefix for custom data stored with users and groups in stormpath
+auth.stormpath-name=<STORMPATH NAME>
+
+# Stormpath ID is "hosted and pre-built user interface screens that take care of common identity functions 
+# for your applications — login, registration, and password reset."
+# We use this for the public deployments, but you can switch it off when running locally for testing and development.
+auth.use-stormpath-id-site=false
+
+# Port that Analyst web UI server will be available on. Optional, defaults to 9090
+#application.port=9090
+
+# IP address of network interface to bind to, default all interfaces.
+#application.ip=127.0.0.1
+
+# Site URL with no trailing slash.
+application.site-url=http://localhost:9090
+
+api.allow-unauthenticated-access=true
+
+# Should a secure session cookie be used? If you're serving over HTTPS (which you should be in any real public
+# deployment), set this to true to prevent man-in-the-middle attacks.
+# If you're not serving over HTTPS (e.g. you're running offline locally for development or testing), setting this to
+# true will cause logins to fail silently, as the browser will refuse to send a secure cookie over a non-TLS connection.
+application.use-secure-cookie=false
+
+# Path for data files
+application.data=data/
+
+# Set to prod in production (disables sending of stack traces to client)
+application.prod=false
+
+# The S3 buckets configured below must be accessible using the AWS credentials available on your machine.
+# See http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/credentials.html for information
+# on how to provide these credentials to Transport Analyst using environment variables or a properties file.
+
+# The S3 bucket in which to store graphs
+cluster.graphs-bucket=<BUCKET>
+
+# The S3 bucket in which to store pointsets
+cluster.pointsets-bucket=<BUCKET>
+
+# The S3 bucket in which to store results
+cluster.results-bucket=<BUCKET>
+
+# The base URL of your cluster's message broker component
+cluster.broker=http://localhost:9001
+
+# If true, single-point results will be computed internally by the Analyst Server, without using the message
+# broker or worker components. Multipoint analysis will not work.
+cluster.work-offline=false
+
+# The URL of your Vanilla Extract server (https://github.com/conveyal/osm-lib)
+application.vex=<Java Vex server URL>
+
+# default language
+application.lang=en
