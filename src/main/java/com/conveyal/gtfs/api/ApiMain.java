@@ -10,7 +10,8 @@ import static spark.Spark.*;
 /**
  * Created by landon on 2/3/16.
  */
-public class Main {
+public class ApiMain {
+    public static GTFSFeed feed;
     public static void main(String[] args){
 
         initialize();
@@ -22,6 +23,7 @@ public class Main {
     public static void initialize () {
 //        Load GTFS datasets
         GTFSFeed feed = GTFSFeed.fromFile("/Users/landon/Downloads/google_transit.zip");
+        ApiMain.feed = feed;
     }
 
 
