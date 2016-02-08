@@ -1,15 +1,7 @@
 language: java
-
-# Travis doesn't (yet) support OpenJDK 8
 jdk:
-  - oraclejdk8
-
-# Replace Travis's default Maven installation step with a no-op.
-# This avoids redundantly pre-running 'mvn install -DskipTests' every time.
+- oraclejdk8
 install: true
-
-# Replace Travis's default build step.
-# Run all Maven phases at once up through verify, install, and deploy.
 script: |
   # only (attempt to) deploy non-pull request commits to the master branch
   if [ "$TRAVIS_PULL_REQUEST" = false ] && [ "$TRAVIS_BRANCH" = master ]; then
@@ -18,21 +10,13 @@ script: |
     # otherwise, just run test suite
     mvn clean verify
   fi
-
 env:
   global:
-    # encrypted AWS access/secret keys to allow automated deployment to the Conveyal Maven repo on S3
-    - secure: "OaVKUTUs8pW0RO0E3KxLLJX+lf7Z/L1LqDShIidCpfHmyyA/h2kIaqW3riDT7+pMiPR8iUcdeRZ0NeMIF8Jy2z9BKdnh18S1t0vTcdSkozVNlmYLd+X1a+OHajk/Jm24wWV2XpRtYk+5633tF8VnQCMEHUIPuAi14fOJOZq2VYg="
-    - secure: "flPyKs8OTAn25VS25aQz4zzZ/GksAzwzIz1chue3wThVteTHyJWtOKOqlsFiesjIRukTG43Ek2TUrotVt8dVMk7SGJEPBU7+UT0cWzdT2M9uOuKiBD+373xVxrpRk04Gl2uQ9JJ4YT1QD1UtiUKvknd7y0vBf4GpAJb6G+r0ZgI="
-
-# If sudo is disabled, CI runs on container based infrastructure (allows caching &c.)
+  - secure: "Qc6DiwXJHojwps7poByHdLGeybLF8NwqO+6LjY3Bwx1seUqeGVyeFD98y/sH0mjuEvBxhfA8MBAK2BhyjqtSqxgZWQeeUkf7GFlRnqwmJQvyG86ae/aapdIamfAAIog9HsqTSo8RYCYVTiKzAlLGorAC0KJwc525+IrxDeZx2hJThdPZpMmgybo53leaqB3z60yG04NZB2wOA3Fi+LmKGZvPbyO0wL1pCz04+WVXvBpuhOkSUEd/VwtVbFP0tEUBpXk8pgaSDmNqH7x0m9PapY3KOBbjVfwhRsD/nIAjZL5dyD3U8mOhXMY5Cv3ItW+taYpuH9AbmYJEUSvaf3r+qnYJ1ebm3cNRbwWnWm5Gjl65YmKa4K5RD2eu4VFn+H/bA56YLLANbQC3gGYx8WbGzeCr6uAQWaU5KTWbeiU9/oEVKK2SCBgkO4xNC14lWRVPzDRS9+FICbFsWXCHZEbcE2RgvUezSxe4kv2UJbjPbH7TqZB+2F0WOkc3DFqbBVcbeGr8CrapuFmnA/P7EN8zsoDY4uaV0D5hcwnAP04iQeRS3JJKJ61oDJLb0VuO5+mtUrZQQDg+LUWWmRJMJx4+kVVTnxhcL874MT056KwICrrB/kTu/UBM1Me7PaIYdV6VafcMe/BGQQLddugoUpVtEioeKKoRMPkeXReAwsDjAZY="
+  - secure: "XiJphtnuC3yyyxY5gmDoUNEqg4ylWKNHzAd3YdTcTpfR7V7Sp1Xnzn0DtYNlR1AYAvRns+DNhLhUtBtCsdgUqRdxT7IWA/bUPb+QGL706KmNkToRX0DoEGrNOfRKfyyL7NgVGshc3mXdCaJOaBvZxUoEAZgfBJS+yF8c+UI45zZeXdNMwctoTgkZaeWCCNdGgWgEhfc4DidO40m6e7XwVXZU11TX15Co5rjrXjUYmqfdO1X0G2es/FqGwlhjAbxwPp7NNLq+F2hnyIVoLuINn9JubvO5RUvdrqCmYtv2xr3rq8gDoL+Iyt1WjVY8qEmPANm3/kPlgF3+UKya1KPmKFXs1aDi3hgE3ePPNtiNMJuNjlw4sVewPrzMat+lp75k6V3JCNeNEY5RhloTJFtcARxz0tsEQz8HqizFJ1aOO08KRzdLNpV1dXSlasN11QWaD3B3xUcDO4ug+X6w3OA339yaOhbNK2AzRB1dcRP/IzPPpe86/FWLfgYky+aQgUsC/Qyk/LEfLZo5VGqM8UVV63anSS4QCq338CfZ1KdUCNYcIewQCmbE2DvfgLfLq4BfYuGj0cUuhFRq2NauNUoIR+Azz+F4cvKM2mqYYQzmhjs66rbsgyqgn6iHmf/1Et/6BnnzIWxZ3JJMxBfuVLZdRCqS+wlmxpcmPXPoB7Bu4ZU="
 sudo: false
-
-# Retain the local Maven repository to speed up builds.
 cache:
   directories:
-    - "$HOME/.m2/repository"
-
-# Notify us of the build status on the Slack channel
+  - "$HOME/.m2/repository"
 notifications:
   slack: conveyal:WQxmWiu8PdmujwLw4ziW72Gc
