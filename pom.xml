@@ -173,6 +173,11 @@
             <artifactId>google-collections</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.9.39</version>
+        </dependency>
 
 
     </dependencies>
