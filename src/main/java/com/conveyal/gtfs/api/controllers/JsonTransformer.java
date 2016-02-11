@@ -1,5 +1,6 @@
 package com.conveyal.gtfs.api.controllers;
 
+import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.Service;
 import com.conveyal.gtfs.model.Shape;
 import com.conveyal.gtfs.model.Trip;
@@ -25,6 +26,7 @@ public class JsonTransformer implements ResponseTransformer {
 //        objectMapper.getSerializationConfig().addMixInAnnotations(Trip.class, TripMixIn.class);
 //        objectMapper.getDeserializationConfig().addMixInAnnotations(Trip.class, TripMixIn.class);
         objectMapper.addMixIn(Trip.class, TripMixIn.class);
+        objectMapper.addMixIn(Frequency.class, FrequencyMixIn.class);
         return objectMapper.writeValueAsString(o);
     }
 
@@ -32,8 +34,13 @@ public class JsonTransformer implements ResponseTransformer {
     public void type (Request request, Response response) {
         response.type("application/json");
     }
+
     public abstract class TripMixIn {
         @JsonIgnore public Map<Integer, Shape> shape_points;
         @JsonIgnore public Service service;
+    }
+
+    public abstract class FrequencyMixIn {
+        @JsonIgnore public Trip trip;
     }
 }
