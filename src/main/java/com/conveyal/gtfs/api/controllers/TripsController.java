@@ -16,6 +16,7 @@ import spark.Request;
 import spark.Response;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Maps;
 
@@ -64,14 +65,15 @@ public class TripsController {
             else
                 halt(404, "Trip " + req.params("id") + " not found");
         }
-//        else if (req.queryParams("route") != null){
-//            for (String feedId : feeds) {
-//                List<Trip> tripsForFeed = ApiMain.feedSources.get(feedId).feed.trips.values();
-//                tripsForFeed.
-//                trips.addAll(searchResults);
-//            }
-//            return trips;
-//        }
+        else if (req.queryParams("route") != null){
+            String route_id = req.queryParams("route");
+            System.out.println(route_id);
+            List<Trip> tripsForRoute = ApiMain.feedSources.get(feeds.get(0)).feed.trips.values()
+                    .stream().filter(t -> t.route.route_id.equals(route_id)).collect(Collectors.toList());
+            System.out.println(tripsForRoute.toString());
+            trips.addAll(tripsForRoute);
+            return trips;
+        }
 //        // bounding box
 //        else if (req.queryParams("max_lat") != null && req.queryParams("max_lon") != null && req.queryParams("min_lat") != null && req.queryParams("min_lon") != null){
 //
