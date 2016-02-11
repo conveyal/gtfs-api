@@ -54,8 +54,9 @@ public class Routes {
 
 //        TODO:'/trips' route is causing infinite recursion between com.conveyal.gtfs.model.Service["calendar"]->com.conveyal.gtfs.model.Calendar["service"]
 //        get("/trips", (request, response) -> mapper.writeValueAsString(ApiMain.feed.trips));
-//        get("/trips/:id", (request, response) ->
-//                mapper.writeValueAsString(ApiMain.feed.trips.get(request.params("id")))
+        get("/trips", TripsController::getTrips, json);
+        get("/trips/:id", TripsController::getTrips, json);
+//                mapper.writeValueAsString(ApiMain.feedSources.get().trips.get(request.params("id")))
 //        );
 //        get("/trips/:id/stoptimes", (request, response) -> mapper.writeValueAsString(ApiMain.feed.getOrderedStopTimesForTrip(request.params("id"))));
 

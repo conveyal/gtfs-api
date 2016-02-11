@@ -86,7 +86,6 @@ public class ApiMain {
                     IOUtils.copy(obj, out);
                 }
                 ApiMain.feedSources.put(feedId, new FeedSource(tempFile.getAbsolutePath()));
-
                 count++;
                 // break after one feed is loaded from aws.
                 if (count > 0){
@@ -107,7 +106,6 @@ public class ApiMain {
                 count++;
             }
         }
-
 
     }
 
