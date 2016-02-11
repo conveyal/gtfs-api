@@ -58,7 +58,7 @@ public class Routes {
         get("/trips/:id", TripsController::getTrips, json);
 //                mapper.writeValueAsString(ApiMain.feedSources.get().trips.get(request.params("id")))
 //        );
-//        get("/trips/:id/stoptimes", (request, response) -> mapper.writeValueAsString(ApiMain.feed.getOrderedStopTimesForTrip(request.params("id"))));
+        get("/trips/:id/stoptimes", StopTimesController::getStopTimes, json);
 
 
         get("/", (request, response) -> "GTFS Api");

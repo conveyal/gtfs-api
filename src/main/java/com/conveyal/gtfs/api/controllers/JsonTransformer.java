@@ -1,9 +1,6 @@
 package com.conveyal.gtfs.api.controllers;
 
-import com.conveyal.gtfs.model.Frequency;
-import com.conveyal.gtfs.model.Service;
-import com.conveyal.gtfs.model.Shape;
-import com.conveyal.gtfs.model.Trip;
+import com.conveyal.gtfs.model.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,6 +9,7 @@ import spark.Request;
 import spark.Response;
 import spark.ResponseTransformer;
 
+import java.util.List;
 import java.util.Map;
 
 /**
