@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.api;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.SystemPropertiesCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectListing;
@@ -92,18 +93,26 @@ public class ApiMain {
                     break;
                 }
             }
+            if (count == 0){
+                System.out.println("No feeds found");
+            }
         }
 
-        // Use hard-coded paths
+        // Use application.data directory from config
         else{
-            String[] listOfFeeds = new String[]{"/Users/landon/Downloads/google_transit.zip", "/Users/landon/Downloads/google_transit_staten_island.zip"};
+            final File folder = new File(ApiMain.config.getProperty("application.data"));
             int count = 0;
-            for (String feedPath : listOfFeeds) {
-                String feedId = "feed-" + String.valueOf(count);
-                System.out.println("Loading feed: " + feedId);
-                System.out.println("Loading feed: " + feedPath);
-                ApiMain.feedSources.put(feedId, new FeedSource(feedPath));
-                count++;
+            for (File file  : folder.listFiles()) {
+                if (file.getName().endsWith(".zip")){
+                    String feedId = file.getName().split(".zip")[0];
+                    String feedPath = file.getAbsolutePath();
+                    System.out.println("Loading feed: " + feedId + " at " + feedPath);
+                    ApiMain.feedSources.put(feedId, new FeedSource(feedPath));
+                    count++;
+                }
+            }
+            if (count == 0){
+                System.out.println("No feeds found");
             }
         }
 
