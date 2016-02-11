@@ -28,7 +28,7 @@ api.allow-unauthenticated-access=true
 # true will cause logins to fail silently, as the browser will refuse to send a secure cookie over a non-TLS connection.
 application.use-secure-cookie=false
 
-# Path for data files
+# Offline path for gtfs feeds
 application.data=data/
 
 # Set to prod in production (disables sending of stack traces to client)
@@ -38,21 +38,9 @@ application.prod=false
 # See http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/credentials.html for information
 # on how to provide these credentials to Transport Analyst using environment variables or a properties file.
 
-# The S3 bucket in which to store graphs
-cluster.graphs-bucket=<BUCKET>
-
-# The S3 bucket in which to store pointsets
-cluster.pointsets-bucket=<BUCKET>
-
-# The S3 bucket in which to store results
-cluster.results-bucket=<BUCKET>
-
-# The base URL of your cluster's message broker component
-cluster.broker=http://localhost:9001
-
-# If true, single-point results will be computed internally by the Analyst Server, without using the message
-# broker or worker components. Multipoint analysis will not work.
-cluster.work-offline=false
+# The S3 bucket in which to get GTFS feeds
+s3.feeds-bucket=<BUCKET>
+s3.work-offline=false
 
 # The URL of your Vanilla Extract server (https://github.com/conveyal/osm-lib)
 application.vex=<Java Vex server URL>
