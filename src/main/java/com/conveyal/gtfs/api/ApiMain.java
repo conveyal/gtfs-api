@@ -63,7 +63,6 @@ public class ApiMain {
 
 
             gtfsList = s3.listObjects(feedBucket);
-//            s3.getbucket;
         }
 
 
@@ -116,22 +115,6 @@ public class ApiMain {
             }
         }
 
-    }
-
-    public GTFSFeed getFeedByAgency(String agencyId) {
-        return new GTFSFeed();
-    }
-
-    public String[] getAgencyIdsForFeed(GTFSFeed feed) {
-//        String[] agencies = new String[]{};
-
-        return feed.agency.keySet().toArray(new String[feed.agency.size()]);
-//        for(Agency agency : feed.agency.){
-//            if (key == "agency_id"){
-//                agencies.add(feed.agency.get("key"));
-//            }
-//        }
-//        return agencies;
     }
 
 }
