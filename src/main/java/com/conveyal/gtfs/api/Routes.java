@@ -16,17 +16,22 @@ public class Routes {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final JsonTransformer json = new JsonTransformer();
-
     public static void routes() {
-
+        routes("");
+    }
+    public static void routes(String prefix) {
+        // prepend prefix with slash if it doesn't already have one and if it's not blank
+        if (!prefix.startsWith("/") && !prefix.equals("")){
+            prefix = "/" + prefix;
+        }
         //  port(5678); <- Uncomment this if you want spark to listen to port 5678 in stead of the default 4567
 
-        get("/hello", (request, response) -> "Hello, you!");
-        get("/feeds", FeedController::getFeeds, json);
-        get("/feeds/:id", FeedController::getFeeds, json);
-//        get("/feeds/:feed_id/agencies", FeedController::getFeeds, json);
+        get(prefix + "/hello", (request, response) -> "Hello, you!");
+        get(prefix + "/feeds", FeedController::getFeeds, json);
+        get(prefix + "/feeds/:id", FeedController::getFeeds, json);
+//        get(prefix + "/feeds/:feed_id/agencies", FeedController::getFeeds, json);
 
-//        get("/feeds/:feed_id/agencies/:id", (request, response) -> {
+//        get(prefix + "/feeds/:feed_id/agencies/:id", (request, response) -> {
 //            System.out.println(request.params());
 //            System.out.println(request.queryParams());
 //            System.out.println("agency request");
@@ -37,30 +42,30 @@ public class Routes {
 //        });
 
         // Routes
-        get("/routes", RoutesController::getRoutes, json);
-        get("/routes/:id", RoutesController::getRoutes, json);
+        get(prefix + "/routes", RoutesController::getRoutes, json);
+        get(prefix + "/routes/:id", RoutesController::getRoutes, json);
 
 
         // Stops
-        get("/stops", StopsController::getStops, json);
-        get("/stops/:id", StopsController::getStops, json);
+        get(prefix + "/stops", StopsController::getStops, json);
+        get(prefix + "/stops/:id", StopsController::getStops, json);
 
         // TODO: Add endpoint for name search for both routes and stops.
 
-//        get("/patterns", (request, response) -> mapper.writeValueAsString(ApiMain.feed.findPatterns()));
-//        get("/patterns/:id", (request, response) -> mapper.writeValueAsString(ApiMain.feed.findPatterns()));
-//        get("/shapes", (request, response) -> mapper.writeValueAsString(ApiMain.feed.shapes));
-//        get("/shapes/:id/shapepoints", (request, response) -> mapper.writeValueAsString(ApiMain.feed.shapes.get(request.params("id"))));
+//        get(prefix + "/patterns", (request, response) -> mapper.writeValueAsString(ApiMain.feed.findPatterns()));
+//        get(prefix + "/patterns/:id", (request, response) -> mapper.writeValueAsString(ApiMain.feed.findPatterns()));
+//        get(prefix + "/shapes", (request, response) -> mapper.writeValueAsString(ApiMain.feed.shapes));
+//        get(prefix + "/shapes/:id/shapepoints", (request, response) -> mapper.writeValueAsString(ApiMain.feed.shapes.get(request.params("id"))));
 
 //        TODO:'/trips' route is causing infinite recursion between com.conveyal.gtfs.model.Service["calendar"]->com.conveyal.gtfs.model.Calendar["service"]
-//        get("/trips", (request, response) -> mapper.writeValueAsString(ApiMain.feed.trips));
-        get("/trips", TripsController::getTrips, json);
-        get("/trips/:id", TripsController::getTrips, json);
+//        get(prefix + "/trips", (request, response) -> mapper.writeValueAsString(ApiMain.feed.trips));
+        get(prefix + "/trips", TripsController::getTrips, json);
+        get(prefix + "/trips/:id", TripsController::getTrips, json);
 //                mapper.writeValueAsString(ApiMain.feedSources.get().trips.get(request.params("id")))
 //        );
-        get("/trips/:id/stoptimes", StopTimesController::getStopTimes, json);
+        get(prefix + "/trips/:id/stoptimes", StopTimesController::getStopTimes, json);
 
 
-        get("/", (request, response) -> "GTFS Api");
+        get(prefix + "/", (request, response) -> "GTFS Api");
     }
 }

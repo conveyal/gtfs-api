@@ -25,6 +25,7 @@ public class ApiMain {
     private static String s3credentials;
     private static AmazonS3Client s3;
     private static String feedBucket;
+    private static String dataDirectory;
     private static ObjectListing gtfsList;
     private static boolean workOffline;
     public static void main(String[] args) throws Exception {
@@ -36,21 +37,24 @@ public class ApiMain {
             in = new FileInputStream(new File(args[0]));
 
         config.load(in);
+        workOffline = Boolean.parseBoolean(
+                ApiMain.config.getProperty("s3.work-offline"));
+        s3credentials = ApiMain.config.getProperty("s3.aws-credentials");
+        feedBucket = ApiMain.config.getProperty("s3.feeds-bucket");
+        dataDirectory = ApiMain.config.getProperty("application.data");
 
-        initialize();
+        initialize(s3credentials, workOffline, feedBucket, dataDirectory);
         Routes.routes();
     }
 
     /**
      * initialize the database
      */
-    public static void initialize() throws IOException {
+    public static void initialize(String dataDirectory) throws IOException {
+        initialize(null, true, "", dataDirectory);
+    }
+    public static void initialize(String s3credentials, Boolean workOffline, String feedBucket, String dataDirectory) throws IOException {
         // Connect to s3
-        workOffline = Boolean.parseBoolean(
-                ApiMain.config.getProperty("s3.work-offline"));
-        s3credentials = ApiMain.config.getProperty("s3.aws-credentials");
-        feedBucket = ApiMain.config.getProperty("s3.feeds-bucket");
-
         if(!workOffline) {
             if (s3credentials != null) {
                 AWSCredentials creds = new ProfileCredentialsProvider(s3credentials, "default").getCredentials();
@@ -99,7 +103,7 @@ public class ApiMain {
 
         // Use application.data directory from config
         else{
-            final File folder = new File(ApiMain.config.getProperty("application.data"));
+            final File folder = new File(dataDirectory);
             int count = 0;
             for (File file  : folder.listFiles()) {
                 if (file.getName().endsWith(".zip")){
