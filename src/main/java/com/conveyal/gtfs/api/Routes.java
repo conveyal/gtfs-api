@@ -67,5 +67,7 @@ public class Routes {
 
 
         get(prefix + "/", (request, response) -> "GTFS Api");
+
+        after((req, res) -> res.header("Access-Control-Allow-Origin", "*"));
     }
 }
