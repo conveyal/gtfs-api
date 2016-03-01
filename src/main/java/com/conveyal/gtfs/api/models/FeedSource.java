@@ -24,6 +24,7 @@ public class FeedSource {
 
     public FeedSource(String path){
         this.feed = GTFSFeed.fromFile(path);
+        feed.findPatterns();
         initIndexes();
 
     }

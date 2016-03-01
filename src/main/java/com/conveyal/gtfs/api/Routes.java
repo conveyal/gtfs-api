@@ -65,9 +65,14 @@ public class Routes {
 //        );
         get(prefix + "/trips/:id/stoptimes", StopTimesController::getStopTimes, json);
 
+        get(prefix + "/patterns", PatternsController::getPatterns, json);
+
 
         get(prefix + "/", (request, response) -> "GTFS Api");
 
-        after((req, res) -> res.header("Access-Control-Allow-Origin", "*"));
+        after((req, res) -> {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.type("application/json");
+        });
     }
 }

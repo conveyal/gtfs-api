@@ -1,10 +1,16 @@
 package com.conveyal.gtfs.api.controllers;
 
+import com.conveyal.geojson.GeometryDeserializer;
+import com.conveyal.geojson.GeometrySerializer;
 import com.conveyal.gtfs.model.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.base.Joiner;
+import com.vividsolutions.jts.geom.LineString;
 import spark.Request;
 import spark.Response;
 import spark.ResponseTransformer;
@@ -25,6 +31,7 @@ public class JsonTransformer implements ResponseTransformer {
 //        objectMapper.getDeserializationConfig().addMixInAnnotations(Trip.class, TripMixIn.class);
         objectMapper.addMixIn(Trip.class, TripMixIn.class);
         objectMapper.addMixIn(Frequency.class, FrequencyMixIn.class);
+        objectMapper.addMixIn(Pattern.class, PatternMixin.class);
         return objectMapper.writeValueAsString(o);
     }
 
@@ -40,5 +47,14 @@ public class JsonTransformer implements ResponseTransformer {
 
     public abstract class FrequencyMixIn {
         @JsonIgnore public Trip trip;
+    }
+
+    public abstract class PatternMixin {
+        @JsonSerialize(using = GeometrySerializer.class)
+        @JsonDeserialize(using = GeometryDeserializer.class)
+        public LineString geometry;
+
+        @JsonIgnore
+        public Joiner joiner;
     }
 }
