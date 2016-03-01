@@ -45,8 +45,11 @@ public class FeedSource {
         // string
         for (Route route : this.feed.routes.values()){
             // TODO: consider concatenating short name and long name
-            this.routeTree.put(route.route_short_name.toUpperCase(), route);
-            this.routeTree.put(route.route_long_name.toUpperCase(), route);
+            if (route.route_short_name != null && !route.route_short_name.isEmpty())
+                this.routeTree.put(route.route_short_name.toUpperCase(), route);
+
+            if (route.route_long_name != null && !route.route_long_name.isEmpty())
+                this.routeTree.put(route.route_long_name.toUpperCase(), route);
         }
 
         // Initialize and build stop radix tree and spatial index
