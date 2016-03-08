@@ -29,7 +29,7 @@ public class TripsController {
     public static Double radius = 1.0; // default 1 km search radius
     public static Object getTrips(Request req, Response res){
 
-        List<Trip> trips = new ArrayList<>();
+        List<TripSummary> trips = new ArrayList<>();
         List<String> feeds = new ArrayList();
 
         if (req.queryParams("feed") != null) {
@@ -45,9 +45,9 @@ public class TripsController {
             // If feed is only param.
             else if (req.queryParams().size() == 1) {
                 for (String feedId : req.queryParams("feed").split(",")){
-                    trips.addAll(ApiMain.feedSources.get(feedId).feed.trips.values());
+                    GTFSFeed feed = ApiMain.feedSources.get(feedId).feed;
+                    feed.trips.values().stream().map(t -> new TripSummary(t, feed)).forEach(trips::add);
                 }
-                return trips;
             }
         }
         else{
@@ -59,19 +59,21 @@ public class TripsController {
 
         // Continue through params
         if (req.params("id") != null) {
-            Trip t = ApiMain.feedSources.get(feeds.get(0)).feed.trips.get(req.params("id"));
+            GTFSFeed feed = ApiMain.feedSources.get(feeds.get(0)).feed;
+            Trip t = feed.trips.get(req.params("id"));
             if(t != null) // && currentUser(req).hasReadPermission(s.projectId))
-                return t;
+                return new TripSummary(t, feed);
             else
                 halt(404, "Trip " + req.params("id") + " not found");
         }
         else if (req.queryParams("route") != null){
             String route_id = req.queryParams("route");
             System.out.println(route_id);
-            List<Trip> tripsForRoute = ApiMain.feedSources.get(feeds.get(0)).feed.trips.values()
+            GTFSFeed feed = ApiMain.feedSources.get(feeds.get(0)).feed;
+            List<Trip> tripsForRoute = feed.trips.values()
                     .stream().filter(t -> t.route.route_id.equals(route_id)).collect(Collectors.toList());
             System.out.println(tripsForRoute.toString());
-            trips.addAll(tripsForRoute);
+            tripsForRoute.stream().map(t -> new TripSummary(t, feed)).forEach(trips::add);
             return trips;
         }
 //        // bounding box
@@ -104,4 +106,46 @@ public class TripsController {
         return null;
     }
 
+    public static class TripSummary {
+        public Route  route;
+        //public Service service;
+        public String trip_id;
+        public String trip_headsign;
+        public String trip_short_name;
+        public int    direction_id;
+        public String block_id;
+        public String shape_id;
+        public int    bikes_allowed;
+        public int    wheelchair_accessible;
+        public Collection<Frequency> frequencies;
+
+        public int start_time;
+        public int trip_length_seconds;
+
+        public TripSummary (Trip trip, GTFSFeed feed) {
+            route = trip.route;
+            //service = trip.service;
+            trip_id = trip.trip_id;
+            trip_headsign = trip.trip_headsign;
+            trip_short_name = trip.trip_short_name;
+            direction_id = trip.direction_id;
+            block_id = trip.block_id;
+            shape_id = trip.shape_id;
+            bikes_allowed = trip.bikes_allowed;
+            wheelchair_accessible = trip.wheelchair_accessible;
+            frequencies = trip.frequencies;
+
+            Iterable<StopTime> stopTimes = feed.getOrderedStopTimesForTrip(trip_id);
+
+            StopTime first = null, last = null;
+
+            for (StopTime st : stopTimes) {
+                if (first == null) first = st;
+                last = st;
+            }
+
+            start_time = first.arrival_time;
+            trip_length_seconds = last.departure_time - first.arrival_time;
+        }
+    }
 }
