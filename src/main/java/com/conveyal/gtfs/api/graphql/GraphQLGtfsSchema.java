@@ -21,6 +21,16 @@ import static graphql.Scalars.*;
  * Created by matthewc on 3/9/16.
  */
 public class GraphQLGtfsSchema {
+    public static GraphQLObjectType stopTimeType = newObject()
+            .name("stopTime")
+            .field(intt("arrival_time"))
+            .field(intt("departure_time"))
+            .field(intt("stop_sequence"))
+            .field(string("stop_id"))
+            .field(string("stop_headsign"))
+            .field(doublee("shape_dist_traveled"))
+            .build();
+
     public static GraphQLObjectType tripType = newObject()
             .name("trip")
             .field(string("trip_id"))
@@ -31,6 +41,12 @@ public class GraphQLGtfsSchema {
                     .name("pattern")
                     .type(new GraphQLTypeReference("pattern"))
                     .dataFetcher(PatternFetcher::fromTrip)
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .name("stop_times")
+                    .type(new GraphQLList(stopTimeType))
+                    .dataFetcher(StopTimeFetcher::fromTrip)
                     .build()
             )
             .build();
@@ -126,6 +142,22 @@ public class GraphQLGtfsSchema {
         return newFieldDefinition()
                 .name(name)
                 .type(GraphQLString)
+                .dataFetcher(new FieldDataFetcher(name))
+                .build();
+    }
+
+    public static GraphQLFieldDefinition intt (String name) {
+        return newFieldDefinition()
+                .name(name)
+                .type(GraphQLInt)
+                .dataFetcher(new FieldDataFetcher(name))
+                .build();
+    }
+
+    public static GraphQLFieldDefinition doublee (String name) {
+        return newFieldDefinition()
+                .name(name)
+                .type(GraphQLFloat)
                 .dataFetcher(new FieldDataFetcher(name))
                 .build();
     }
