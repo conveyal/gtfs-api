@@ -29,6 +29,19 @@ public class GraphQLGtfsSchema {
             .field(string("block_id"))
             .build();
 
+    public static GraphQLScalarType lineStringType = new GraphQLScalarType("GeoJSON", "GeoJSON", new GeoJsonCoercing());
+
+    public static GraphQLObjectType patternType = newObject()
+            .name("pattern")
+            .field(string("pattern_id"))
+            .field(newFieldDefinition()
+                    .type(lineStringType)
+                    .dataFetcher(new FieldDataFetcher("geometry"))
+                    .name("geometry")
+                    .build()
+            )
+            .build();
+
     public static GraphQLObjectType routeType = newObject()
             .name("route")
             .field(string("route_id"))
@@ -44,6 +57,12 @@ public class GraphQLGtfsSchema {
                     .type(new GraphQLList(tripType))
                     .name("trips")
                     .dataFetcher(TripDataFetcher::fetch)
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .type(new GraphQLList(patternType))
+                    .name("patterns")
+                    .dataFetcher(PatternFetcher::fromRoute)
                     .build()
             )
             .build();
