@@ -4,6 +4,7 @@ import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
+import com.conveyal.gtfs.model.Trip;
 import graphql.schema.DataFetchingEnvironment;
 
 import java.util.*;
@@ -29,5 +30,15 @@ public class PatternFetcher {
 
         // graphql insists on receiving list
         return new ArrayList<>(patternSet);
+    }
+
+    public static Pattern fromTrip(DataFetchingEnvironment env) {
+        Trip trip = (Trip) env.getSource();
+        // TODO hack
+        FeedSource feed = ApiMain.feedSources.values().stream()
+                .filter(s -> s.feed.trips.get(trip.trip_id) == trip)
+                .findFirst().orElse(null);
+
+        return feed.feed.patterns.get(feed.feed.tripPatternMap.get(trip.trip_id));
     }
 }

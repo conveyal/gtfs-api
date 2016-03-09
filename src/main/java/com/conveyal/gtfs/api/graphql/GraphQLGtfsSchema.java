@@ -27,6 +27,12 @@ public class GraphQLGtfsSchema {
             .field(string("trip_headsign"))
             .field(string("trip_short_name"))
             .field(string("block_id"))
+            .field(newFieldDefinition()
+                    .name("pattern")
+                    .type(new GraphQLTypeReference("pattern"))
+                    .dataFetcher(PatternFetcher::fromTrip)
+                    .build()
+            )
             .build();
 
     public static GraphQLScalarType lineStringType = new GraphQLScalarType("GeoJSON", "GeoJSON", new GeoJsonCoercing());
@@ -38,6 +44,12 @@ public class GraphQLGtfsSchema {
                     .type(lineStringType)
                     .dataFetcher(new FieldDataFetcher("geometry"))
                     .name("geometry")
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .name("trips")
+                    .type(new GraphQLList(tripType))
+                    .dataFetcher(TripDataFetcher::fromPattern)
                     .build()
             )
             .build();
@@ -56,7 +68,7 @@ public class GraphQLGtfsSchema {
             .field(newFieldDefinition()
                     .type(new GraphQLList(tripType))
                     .name("trips")
-                    .dataFetcher(TripDataFetcher::fetch)
+                    .dataFetcher(TripDataFetcher::fromRoute)
                     .build()
             )
             .field(newFieldDefinition()
