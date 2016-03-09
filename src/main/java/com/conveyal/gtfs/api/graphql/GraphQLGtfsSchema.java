@@ -62,6 +62,19 @@ public class GraphQLGtfsSchema {
                     .dataFetcher(StopTimeFetcher::fromTrip)
                     .build()
             )
+            // some pseudo-fields to reduce the amount of data that has to be fetched
+            .field(newFieldDefinition()
+                    .name("start_time")
+                    .type(GraphQLInt)
+                    .dataFetcher(TripDataFetcher::getStartTime)
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .name("duration")
+                    .type(GraphQLInt)
+                    .dataFetcher(TripDataFetcher::getDuration)
+                    .build()
+            )
             .build();
 
     public static GraphQLScalarType lineStringType = new GraphQLScalarType("GeoJSON", "GeoJSON", new GeoJsonCoercing());
