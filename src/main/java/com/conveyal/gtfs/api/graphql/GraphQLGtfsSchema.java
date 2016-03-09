@@ -21,6 +21,19 @@ import static graphql.Scalars.*;
  * Created by matthewc on 3/9/16.
  */
 public class GraphQLGtfsSchema {
+    public static GraphQLObjectType stopType = newObject()
+            .name("stop")
+            .field(string("stop_id"))
+            .field(string("stop_name"))
+            .field(string("stop_code"))
+            .field(string("stop_desc"))
+            .field(doublee("stop_lon"))
+            .field(doublee("stop_lat"))
+            .field(string("zone_id"))
+            .field(string("stop_url"))
+            .field(string("stop_timezone"))
+            .build();
+
     public static GraphQLObjectType stopTimeType = newObject()
             .name("stopTime")
             .field(intt("arrival_time"))
@@ -130,6 +143,14 @@ public class GraphQLGtfsSchema {
 
                         return routes;
                     })
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .name("stops")
+                    .type(new GraphQLList(stopType))
+                    .argument(stringArg("feed_id"))
+                    .argument(stringArg("stop_id"))
+                    .dataFetcher(StopFetcher::apex)
                     .build()
             )
             .build();
