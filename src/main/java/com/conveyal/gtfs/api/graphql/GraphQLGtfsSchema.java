@@ -121,6 +121,21 @@ public class GraphQLGtfsSchema {
             )
             .build();
 
+    public static GraphQLObjectType feedType = newObject()
+            .name("feed")
+            .field(string("feed_id"))
+            .field(string("feed_publisher_name"))
+            .field(string("feed_publisher_url"))
+            .field(string("feed_lang"))
+            .field(string("feed_version"))
+            .field(newFieldDefinition()
+                    .name("routes")
+                    .type(new GraphQLList(routeType))
+                    .dataFetcher(RouteFetcher::forFeed)
+                    .build()
+            )
+            .build();
+
     public static GraphQLObjectType routeQuery = newObject()
             .name("routeQuery")
             .field(newFieldDefinition()
@@ -137,6 +152,13 @@ public class GraphQLGtfsSchema {
                     .argument(multiStringArg("feed_id"))
                     .argument(multiStringArg("stop_id"))
                     .dataFetcher(StopFetcher::apex)
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .name("feeds")
+                    .argument(multiStringArg("feed_id"))
+                    .dataFetcher(FeedFetcher::apex)
+                    .type(new GraphQLList(feedType))
                     .build()
             )
             .build();
