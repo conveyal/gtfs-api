@@ -126,43 +126,16 @@ public class GraphQLGtfsSchema {
             .field(newFieldDefinition()
                     .name("routes")
                     .type(new GraphQLList(routeType))
-                    .argument(stringArg("route_id"))
-                    .argument(stringArg("feed_id"))
-                    .dataFetcher(environment -> {
-                        Map<String, Object> args = environment.getArguments();
-
-                        Collection<FeedSource> feeds;
-
-                        if (args.get("feed_id") != null) {
-                            String feedId = (String) args.get("feed_id");
-                            feeds = ApiMain.feedSources.values().stream()
-                                    .filter(f -> feedId.equals(f.feed.feedId))
-                                    .collect(Collectors.toList());
-                        } else {
-                            feeds = ApiMain.feedSources.values();
-                        }
-
-                        List<Route> routes = new ArrayList<>();
-
-                        for (FeedSource feed : feeds) {
-                            if (args.get("route_id") != null) {
-                                String routeId = (String) args.get("route_id");
-                                if (feed.feed.routes.containsKey(routeId)) routes.add(feed.feed.routes.get(routeId));
-                            }
-                            else {
-                                routes.addAll(feed.feed.routes.values());
-                            }
-                        }
-
-                        return routes;
-                    })
+                    .argument(multiStringArg("route_id"))
+                    .argument(multiStringArg("feed_id"))
+                    .dataFetcher(RouteFetcher::apex)
                     .build()
             )
             .field(newFieldDefinition()
                     .name("stops")
                     .type(new GraphQLList(stopType))
-                    .argument(stringArg("feed_id"))
-                    .argument(stringArg("stop_id"))
+                    .argument(multiStringArg("feed_id"))
+                    .argument(multiStringArg("stop_id"))
                     .dataFetcher(StopFetcher::apex)
                     .build()
             )
@@ -203,4 +176,10 @@ public class GraphQLGtfsSchema {
                 .build();
     }
 
+    public static GraphQLArgument multiStringArg (String name) {
+        return newArgument()
+                .name(name)
+                .type(new GraphQLList(GraphQLString))
+                .build();
+    }
 }

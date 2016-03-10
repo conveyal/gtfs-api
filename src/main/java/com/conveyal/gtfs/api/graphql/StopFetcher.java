@@ -20,8 +20,8 @@ public class StopFetcher {
         Collection<FeedSource> feeds;
 
         if (args.get("feed_id") != null) {
-            String feedId = (String) args.get("feed_id");
-            feeds = Arrays.asList(ApiMain.feedSources.get(feedId));
+            List<String> feedId = (List<String>) args.get("feed_id");
+            feeds = feedId.stream().map(ApiMain.feedSources::get).collect(Collectors.toList());
         } else {
             feeds = ApiMain.feedSources.values();
         }
@@ -30,8 +30,11 @@ public class StopFetcher {
 
         for (FeedSource feed : feeds) {
             if (args.get("stop_id") != null) {
-                String stopId = (String) args.get("stop_id");
-                if (feed.feed.stops.containsKey(stopId)) stops.add(feed.feed.stops.get(stopId));
+                List<String> stopId = (List<String>) args.get("stop_id");
+                stopId.stream()
+                        .filter(feed.feed.stops::containsKey)
+                        .map(feed.feed.stops::get)
+                        .forEach(stops::add);
             }
             else {
                 stops.addAll(feed.feed.stops.values());
