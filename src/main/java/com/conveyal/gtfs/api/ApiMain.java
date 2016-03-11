@@ -111,14 +111,16 @@ public class ApiMain {
                         InputStream obj = object.getObjectContent();
                         System.out.println(object.getObjectMetadata().getETag());
 
-                        // create tempfile so we can pass GTFSFeed.fromFile a string file path
-                        File tempFile = File.createTempFile(feedSource, ".zip");
-                        tempFile.getAbsolutePath();
-                        tempFile.deleteOnExit();
+                        // create file so we can pass GTFSFeed.fromFile a string file path
+                        String tDir = System.getProperty("java.io.tmpdir");
+                        File tempFile = new File(tDir, feedSource + ".zip");
+                        System.out.println(tempFile.getAbsolutePath());
+
                         try (FileOutputStream out = new FileOutputStream(tempFile)) {
                             IOUtils.copy(obj, out);
                         }
                         ApiMain.feedSources.put(feedSource, new FeedSource(tempFile.getAbsolutePath()));
+                        tempFile.deleteOnExit();
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (AmazonServiceException ase) {
