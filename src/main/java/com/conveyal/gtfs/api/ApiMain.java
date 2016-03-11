@@ -80,10 +80,11 @@ public class ApiMain {
                 for (S3ObjectSummary objSummary : gtfsList.getObjectSummaries()){
                     String feedId = objSummary.getKey();
                     System.out.println("Loading feed: " + feedId);
-                    InputStream obj = s3.getObject(feedBucket, objSummary.getKey()).getObjectContent();
+                    String keyName = objSummary.getKey();
+                    InputStream obj = s3.getObject(feedBucket, keyName).getObjectContent();
 
                     // create tempfile so we can pass GTFSFeed.fromFile a string file path
-                    File tempFile = File.createTempFile("test", ".zip");
+                    File tempFile = File.createTempFile(keyName, ".zip");
                     tempFile.getAbsolutePath();
                     tempFile.deleteOnExit();
                     try (FileOutputStream out = new FileOutputStream(tempFile)) {
@@ -108,9 +109,10 @@ public class ApiMain {
                         S3Object object = s3.getObject(
                                 new GetObjectRequest(feedBucket, feedSource + ".zip"));
                         InputStream obj = object.getObjectContent();
+                        System.out.println(object.getObjectMetadata().getETag());
 
                         // create tempfile so we can pass GTFSFeed.fromFile a string file path
-                        File tempFile = File.createTempFile("test", ".zip");
+                        File tempFile = File.createTempFile(feedSource, ".zip");
                         tempFile.getAbsolutePath();
                         tempFile.deleteOnExit();
                         try (FileOutputStream out = new FileOutputStream(tempFile)) {
