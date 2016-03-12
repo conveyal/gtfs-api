@@ -12,7 +12,9 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.index.strtree.STRtree;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by landon on 2/8/16.
@@ -38,17 +40,19 @@ public class FeedSource {
         this.routeTree = new ConcurrentRadixTree<Route>(new DefaultCharArrayNodeFactory());
 
         // spatial
-        List<Route> indexedRoutes = new ArrayList<>();
+        Set<Route> indexedRoutes = new HashSet<>();
         for (Pattern pattern : this.feed.patterns.values()){
             Route currentRoute = this.feed.trips.get(pattern.associatedTrips.get(0)).route;
 //          TODO: check if list of routes already contains current route
-//            System.out.println(this.feed.trips.get(pattern.associatedTrips.get(0)).trip_headsign);
-            Envelope routeEnvelope = pattern.geometry.getEnvelopeInternal();
+            if (!indexedRoutes.contains(currentRoute)){
+                //            System.out.println(this.feed.trips.get(pattern.associatedTrips.get(0)).trip_headsign);
+                Envelope routeEnvelope = pattern.geometry.getEnvelopeInternal();
 //            Envelope routeEnvelope = new Envelope(pattern.geometry.getEndPoint().getCoordinate());
 //            Envelope routeEnvelope = new Envelope(new Coordinate(-122.0, 37.0));
 //            Envelope routeEnvelope = new Envelope(pattern.geometry.getCentroid().getCoordinate());
-            this.routeIndex.insert(routeEnvelope, currentRoute);
-            indexedRoutes.add(currentRoute);
+                this.routeIndex.insert(routeEnvelope, pattern);
+                indexedRoutes.add(currentRoute);
+            }
         }
         this.routeIndex.build();
 
