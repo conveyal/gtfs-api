@@ -100,7 +100,7 @@ public class RoutesController {
                 System.out.println("checking feed: " + feedId);
 
                 // search query must be in upper case to match radix tree keys
-                Iterable<Route> searchResults = ApiMain.feedSources.get(feedId).routeTree.getValuesForClosestKeys(req.queryParams("name").toUpperCase());
+                Iterable<Route> searchResults = ApiMain.feedSources.get(feedId).routeTree.getValuesForKeysContaining(req.queryParams("name").toUpperCase());
                 for (Route route : searchResults) {
                     routes.add(route);
                 }

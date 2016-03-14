@@ -4,9 +4,11 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
-import com.googlecode.concurrenttrees.radix.ConcurrentRadixTree;
-import com.googlecode.concurrenttrees.radix.RadixTree;
+//import com.googlecode.concurrenttrees.radix.ConcurrentRadixTree;
+//import com.googlecode.concurrenttrees.radix.RadixTree;
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory;
+import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree;
+import com.googlecode.concurrenttrees.suffix.SuffixTree;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.index.strtree.STRtree;
@@ -23,8 +25,8 @@ public class FeedSource {
 
     public STRtree routeIndex;
     public STRtree stopIndex;
-    public RadixTree<Stop> stopTree;
-    public RadixTree<Route> routeTree;
+    public SuffixTree<Stop> stopTree;
+    public SuffixTree<Route> routeTree;
     public GTFSFeed feed;
 
     public FeedSource(String path){
@@ -37,7 +39,7 @@ public class FeedSource {
     public void initIndexes(){
         // Initialize and build route radix tree and spatial index
         this.routeIndex = new STRtree();
-        this.routeTree = new ConcurrentRadixTree<Route>(new DefaultCharArrayNodeFactory());
+        this.routeTree = new ConcurrentSuffixTree<Route>( new DefaultCharArrayNodeFactory() ) {};
 
         // spatial
         Set<Route> indexedRoutes = new HashSet<>();
@@ -68,7 +70,7 @@ public class FeedSource {
 
         // Initialize and build stop radix tree and spatial index
         this.stopIndex = new STRtree();
-        this.stopTree = new ConcurrentRadixTree<Stop>(new DefaultCharArrayNodeFactory());
+        this.stopTree = new ConcurrentSuffixTree<Stop>( new DefaultCharArrayNodeFactory() );
         for (Stop stop : this.feed.stops.values()){
             // spatial
             Coordinate stopCoords = new Coordinate(stop.stop_lon, stop.stop_lat);
