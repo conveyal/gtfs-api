@@ -1,5 +1,6 @@
 package com.conveyal.gtfs.api.graphql;
 
+import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.model.FeedInfo;
@@ -48,6 +49,18 @@ public class RouteFetcher {
 
     public static List<Route> forFeed(DataFetchingEnvironment environment) {
         FeedInfo fi = (FeedInfo) environment.getSource();
-        return new ArrayList<>(ApiMain.feedSources.get(fi.feed_id).feed.routes.values());
+        List<String> routeIds = environment.getArgument("route_id");
+
+        GTFSFeed feed = ApiMain.feedSources.get(fi.feed_id).feed;
+
+        if (routeIds != null) {
+            return routeIds.stream()
+                    .filter(feed.routes::containsKey)
+                    .map(feed.routes::get)
+                    .collect(Collectors.toList());
+        }
+        else {
+            return new ArrayList<>(feed.routes.values());
+        }
     }
 }
