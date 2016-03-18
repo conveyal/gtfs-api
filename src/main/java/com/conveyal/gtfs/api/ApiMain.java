@@ -107,10 +107,10 @@ public class ApiMain {
             int count = 0;
             for (File file  : folder.listFiles()) {
                 if (file.getName().endsWith(".zip")){
-                    String feedId = file.getName().split(".zip")[0];
                     String feedPath = file.getAbsolutePath();
-                    System.out.println("Loading feed: " + feedId + " at " + feedPath);
-                    ApiMain.feedSources.put(feedId, new FeedSource(feedPath));
+                    System.out.println("Loading feed at " + feedPath);
+                    FeedSource fs = new FeedSource(feedPath);
+                    ApiMain.feedSources.put(fs.feed.feedId, fs);
                     count++;
                 }
             }
