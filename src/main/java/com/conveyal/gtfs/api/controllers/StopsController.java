@@ -39,7 +39,7 @@ public class StopsController {
                 }
             }
             if (feeds.size() == 0){
-                return "Must specify valid feed id.";
+                halt(404, "Must specify valid feed id.");
             }
             // If feed is only param.
             else if (req.queryParams().size() == 1) {
@@ -51,8 +51,8 @@ public class StopsController {
         }
         else{
 //            res.body("Must specify valid feed id.");
-            return "Must specify valid feed id.";
-//            halt(404, "Must specify valid feed id.");
+//            return "Must specify valid feed id.";
+            halt(404, "Must specify valid feed id.");
         }
 
 
