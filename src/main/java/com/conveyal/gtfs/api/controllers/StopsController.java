@@ -42,7 +42,7 @@ public class StopsController {
                 halt(404, "Must specify valid feed id.");
             }
             // If feed is only param.
-            else if (req.queryParams().size() == 1) {
+            else if (req.queryParams().size() == 1 && req.params("id") == null) {
                 for (String feedId : req.queryParams("feed").split(",")){
                     stops.addAll(ApiMain.feedSources.get(feedId).feed.stops.values());
                 }
