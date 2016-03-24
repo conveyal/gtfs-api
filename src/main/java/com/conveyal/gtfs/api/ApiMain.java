@@ -49,7 +49,7 @@ public class ApiMain {
         dataDirectory = ApiMain.config.getProperty("application.data");
         String[] feedList = {"a9b462ce-5c94-429a-8186-28ac84c3a02c"};
 //        List<String> eTags = initialize(s3credentials, workOffline, feedBucket, dataDirectory, feedList, "completed/");
-        List<String> eTags = initialize(null, false, "datatools-gtfs-mtc", null, feedList, "completed/");
+        List<String> eTags = initialize(null, false, "datatools-gtfs-mtc", null, null, "completed/");
         System.out.println(eTags);
         Routes.routes("api");
     }
@@ -126,14 +126,15 @@ public class ApiMain {
 
     }
     public static String loadFeedFromBucket(String feedBucket, String feedSource, String prefix){
-        String feedPath;
+        String feedPath = feedSource;
         String eTag = "";
         String tDir = System.getProperty("java.io.tmpdir");
+
         if (prefix != null) {
-            feedPath = prefix + feedSource + ".zip";
+            feedPath = prefix + feedSource;
         }
-        else {
-            feedPath = feedSource + ".zip";
+        if (!feedSource.endsWith(".zip")){
+            feedPath += ".zip";
         }
         try {
 
@@ -178,8 +179,16 @@ public class ApiMain {
                 gtfsList = s3.listObjects(feedBucket, prefix);
 
             int count = 0;
-            for (S3ObjectSummary objSummary : gtfsList.getObjectSummaries()){
+            List<S3ObjectSummary> summaries = gtfsList.getObjectSummaries();
+
+            // number of feeds to load is size minus one (because folder is listed here also)
+            System.out.println(summaries.size() - 1 + " feeds to load");
+
+            for (S3ObjectSummary objSummary : summaries){
                 String feedId = objSummary.getKey();
+                if (feedId.equals(prefix)){
+                    continue;
+                }
                 String eTag = objSummary.getETag();
 
                 System.out.println("Loading feed: " + feedId);
