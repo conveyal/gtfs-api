@@ -92,6 +92,7 @@ public class ApiMain {
             for (File file  : folder.listFiles()) {
                 if (file.getName().endsWith(".zip")){
 
+                    // drop .zip
                     String feedId = file.getName().split(".zip")[0];
                     String feedPath = file.getAbsolutePath();
                     System.out.println("Loading feed: " + feedId + " at " + feedPath);
@@ -125,16 +126,29 @@ public class ApiMain {
         }
 
     }
-    public static String loadFeedFromBucket(String feedBucket, String feedSource, String prefix){
-        String feedPath = feedSource;
+    public static String loadFeedFromBucket(String feedBucket, String keyName, String prefix){
+
+
+
+        // drop .zip and any folder prefix
+        String feedId = keyName.split(".zip")[0];
+
+        if (feedId.contains("/")){
+            String[] pathParts = feedId.split("/");
+
+            // feedId equals last part
+            feedId = pathParts[pathParts.length - 1];
+        }
+
+        String feedPath;
         String eTag = "";
         String tDir = System.getProperty("java.io.tmpdir");
 
         if (prefix != null) {
-            feedPath = prefix + feedSource;
+            feedPath = prefix + feedId + ".zip";
         }
-        if (!feedSource.endsWith(".zip")){
-            feedPath += ".zip";
+        else {
+            feedPath = feedId + ".zip";
         }
         try {
 
@@ -147,13 +161,13 @@ public class ApiMain {
             System.out.println(eTag);
 
             // create file so we can pass GTFSFeed.fromFile a string file path
-            File tempFile = new File(tDir, feedSource + ".zip");
+            File tempFile = new File(tDir, feedId + ".zip");
             System.out.println(tempFile.getAbsolutePath());
 
             try (FileOutputStream out = new FileOutputStream(tempFile)) {
                 IOUtils.copy(obj, out);
             }
-            ApiMain.feedSources.put(feedSource, new FeedSource(tempFile.getAbsolutePath()));
+            ApiMain.feedSources.put(feedId, new FeedSource(tempFile.getAbsolutePath()));
             tempFile.deleteOnExit();
         } catch (IOException e) {
             e.printStackTrace();
@@ -185,20 +199,32 @@ public class ApiMain {
             System.out.println(summaries.size() - 1 + " feeds to load");
 
             for (S3ObjectSummary objSummary : summaries){
-                String feedId = objSummary.getKey();
+
+                String keyName = objSummary.getKey();
+
+                // drop .zip and any folder prefix
+                String feedId = keyName.split(".zip")[0];
+
                 if (feedId.equals(prefix)){
                     continue;
+                }
+                if (feedId.contains("/")){
+                    String[] pathParts = feedId.split("/");
+
+                    // feedId equals last part
+                    feedId = pathParts[pathParts.length - 1];
                 }
                 String eTag = objSummary.getETag();
 
                 System.out.println("Loading feed: " + feedId);
-                String keyName = objSummary.getKey();
+
                 InputStream obj = s3.getObject(feedBucket, keyName).getObjectContent();
 
+                String tDir = System.getProperty("java.io.tmpdir");
                 // create tempfile so we can pass GTFSFeed.fromFile a string file path
                 File tempFile = null;
                 try {
-                    tempFile = File.createTempFile(keyName, ".zip");
+                    tempFile = File.createTempFile(tDir, feedId + ".zip");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
