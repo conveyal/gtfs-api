@@ -42,21 +42,21 @@ public class ApiMain {
         s3credentials = ApiMain.config.getProperty("s3.aws-credentials");
         feedBucket = ApiMain.config.getProperty("s3.feeds-bucket");
         dataDirectory = ApiMain.config.getProperty("application.data");
-        String[] feedList = {"9d464404-fae7-4f08-8cad-207554a61cbc"};
-        initialize(s3credentials, workOffline, feedBucket, dataDirectory, feedList);
-        Routes.routes();
+        String[] feedList = {"a9b462ce-5c94-429a-8186-28ac84c3a02c"};
+        initialize(s3credentials, workOffline, feedBucket, dataDirectory, feedList, "completed/");
+        Routes.routes("api");
     }
 
     /**
      * initialize the database
      */
     public static void initialize(String dataDirectory) throws IOException {
-        initialize(null, true, "", dataDirectory, null);
+        initialize(null, true, "", dataDirectory, null, null);
     }
-    public static void initialize(String s3credentials, Boolean workOffline, String feedBucket, String dataDirectory) throws IOException {
-        initialize(s3credentials, workOffline, feedBucket, dataDirectory, null);
+    public static void initialize(String s3credentials, Boolean workOffline, String feedBucket, String dataDirectory) {
+        initialize(s3credentials, workOffline, feedBucket, dataDirectory, null, null);
     }
-    public static void initialize(String s3credentials, Boolean workOffline, String feedBucket, String dataDirectory, String[] feedList) throws IOException {
+    public static void initialize(String s3credentials, Boolean workOffline, String feedBucket, String dataDirectory, String[] feedList, String prefix) {
 
         // Load GTFS datasets
 
@@ -74,61 +74,7 @@ public class ApiMain {
                 // default credentials providers, e.g. IAM role
                 s3 = new AmazonS3Client();
             }
-            if (feedList == null){
-                gtfsList = s3.listObjects(feedBucket);
-                int count = 0;
-                for (S3ObjectSummary objSummary : gtfsList.getObjectSummaries()){
-                    String feedId = objSummary.getKey();
-                    System.out.println("Loading feed: " + feedId);
-                    String keyName = objSummary.getKey();
-                    InputStream obj = s3.getObject(feedBucket, keyName).getObjectContent();
-
-                    // create tempfile so we can pass GTFSFeed.fromFile a string file path
-                    File tempFile = File.createTempFile(keyName, ".zip");
-                    tempFile.getAbsolutePath();
-                    tempFile.deleteOnExit();
-                    try (FileOutputStream out = new FileOutputStream(tempFile)) {
-                        IOUtils.copy(obj, out);
-                    }
-                    ApiMain.feedSources.put(feedId, new FeedSource(tempFile.getAbsolutePath()));
-                    count++;
-                    // break after one feed is loaded from aws.
-                    if (count > 0){
-                        break;
-                    }
-                }
-                if (count == 0){
-                    System.out.println("No feeds found");
-                }
-            }
-            else {
-                // cycle through list of feedSourceIds
-                for (String feedSource : feedList) {
-                    try {
-                        System.out.println("Downloading feed from s3");
-                        S3Object object = s3.getObject(
-                                new GetObjectRequest(feedBucket, feedSource + ".zip"));
-                        InputStream obj = object.getObjectContent();
-                        System.out.println(object.getObjectMetadata().getETag());
-
-                        // create file so we can pass GTFSFeed.fromFile a string file path
-                        String tDir = System.getProperty("java.io.tmpdir");
-                        File tempFile = new File(tDir, feedSource + ".zip");
-                        System.out.println(tempFile.getAbsolutePath());
-
-                        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-                            IOUtils.copy(obj, out);
-                        }
-                        ApiMain.feedSources.put(feedSource, new FeedSource(tempFile.getAbsolutePath()));
-                        tempFile.deleteOnExit();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (AmazonServiceException ase) {
-                        System.out.println("Error downloading from s3");
-                        ase.printStackTrace();
-                    }
-                }
-            }
+            loadFeedsFromBucket(feedList, prefix);
 
         }
 
@@ -152,6 +98,93 @@ public class ApiMain {
             }
         }
 
+    }
+    public static void loadFeedFromBucket(String feedSource, String prefix){
+        String feedPath;
+        String tDir = System.getProperty("java.io.tmpdir");
+        if (prefix != null) {
+            feedPath = prefix + feedSource + ".zip";
+        }
+        else {
+            feedPath = feedSource + ".zip";
+        }
+        try {
+
+            System.out.println("Downloading feed from s3 at " + feedPath);
+
+            S3Object object = s3.getObject(
+                    new GetObjectRequest(feedBucket, feedPath));
+            InputStream obj = object.getObjectContent();
+            System.out.println(object.getObjectMetadata().getETag());
+
+            // create file so we can pass GTFSFeed.fromFile a string file path
+            File tempFile = new File(tDir, feedSource + ".zip");
+            System.out.println(tempFile.getAbsolutePath());
+
+            try (FileOutputStream out = new FileOutputStream(tempFile)) {
+                IOUtils.copy(obj, out);
+            }
+            ApiMain.feedSources.put(feedSource, new FeedSource(tempFile.getAbsolutePath()));
+            tempFile.deleteOnExit();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (AmazonServiceException ase) {
+            System.out.println("Error downloading from s3 for " + feedPath);
+            ase.printStackTrace();
+        }
+    }
+
+    public static void loadFeedsFromBucket(){
+        loadFeedsFromBucket(null, null);
+    }
+    public static void loadFeedsFromBucket(String prefix){
+        loadFeedsFromBucket(null, prefix);
+    }
+    public static void loadFeedsFromBucket(String[] feedList, String prefix){
+        if (feedList == null){
+            if (prefix == null)
+                gtfsList = s3.listObjects(feedBucket);
+            else
+                gtfsList = s3.listObjects(feedBucket, prefix);
+
+            int count = 0;
+            for (S3ObjectSummary objSummary : gtfsList.getObjectSummaries()){
+                String feedId = objSummary.getKey();
+                System.out.println("Loading feed: " + feedId);
+                String keyName = objSummary.getKey();
+                InputStream obj = s3.getObject(feedBucket, keyName).getObjectContent();
+
+                // create tempfile so we can pass GTFSFeed.fromFile a string file path
+                File tempFile = null;
+                try {
+                    tempFile = File.createTempFile(keyName, ".zip");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                tempFile.getAbsolutePath();
+
+                try (FileOutputStream out = new FileOutputStream(tempFile)) {
+                    IOUtils.copy(obj, out);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                ApiMain.feedSources.put(feedId, new FeedSource(tempFile.getAbsolutePath()));
+                tempFile.deleteOnExit();
+                count++;
+            }
+            if (count == 0){
+                System.out.println("No feeds found");
+            }
+        }
+        // if feedList != null
+        else {
+            // cycle through list of feedSourceIds
+            for (String feedSource : feedList) {
+                loadFeedFromBucket(feedSource, prefix);
+            }
+        }
     }
 
 }
