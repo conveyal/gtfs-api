@@ -49,7 +49,7 @@ public class ApiMain {
         dataDirectory = ApiMain.config.getProperty("application.data");
         String[] feedList = {"a9b462ce-5c94-429a-8186-28ac84c3a02c"};
 //        List<String> eTags = initialize(s3credentials, workOffline, feedBucket, dataDirectory, feedList, "completed/");
-        List<String> eTags = initialize(null, false, feedBucket, null, feedList, "completed/");
+        List<String> eTags = initialize(null, false, "datatools-gtfs-mtc", null, feedList, "completed/");
         System.out.println(eTags);
         Routes.routes("api");
     }
@@ -216,7 +216,7 @@ public class ApiMain {
             // cycle through list of feedSourceIds
             int count = 0;
             for (String feedSource : feedList) {
-                eTags.add(loadFeedFromBucket(feedSource, prefix));
+                eTags.add(loadFeedFromBucket(feedBucket, feedSource, prefix));
                 count++;
             }
         }
