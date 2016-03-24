@@ -21,6 +21,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.zip.ZipInputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Created by landon on 2/3/16.
  */
@@ -33,6 +36,7 @@ public class ApiMain {
     private static String dataDirectory;
     private static ObjectListing gtfsList;
     private static boolean workOffline;
+    public static final Logger LOG = LoggerFactory.getLogger(ApiMain.class);
     public static void main(String[] args) throws Exception {
         FileInputStream in;
 
@@ -51,7 +55,7 @@ public class ApiMain {
 //        List<String> eTags = initialize(s3credentials, workOffline, feedBucket, dataDirectory, feedList, "completed/");
         List<String> eTags = initialize(null, false, "datatools-gtfs-mtc", null, null, "completed/");
         loadFeedFromBucket(feedBucket, "a9b462ce-5c94-429a-8186-28ac84c3a02c", "completed/");
-        System.out.println(eTags);
+        LOG.info(eTags.toString());
         Routes.routes("api");
     }
 
@@ -96,7 +100,7 @@ public class ApiMain {
                     // drop .zip
                     String feedId = file.getName().split(".zip")[0];
                     String feedPath = file.getAbsolutePath();
-                    System.out.println("Loading feed: " + feedId + " at " + feedPath);
+                    LOG.info("Loading feed: " + feedId + " at " + feedPath);
 
                     // TODO: use gtfs-lib provided feedId (feedId from feed or filename minus ".zip"
                     ApiMain.feedSources.put(feedId, new FeedSource(feedPath));
@@ -121,15 +125,13 @@ public class ApiMain {
                 }
             }
             if (count == 0){
-                System.out.println("No feeds found");
+                LOG.info("No feeds found");
             }
             return fileList;
         }
 
     }
     public static String loadFeedFromBucket(String feedBucket, String keyName, String prefix){
-
-
 
         // drop .zip and any folder prefix
         String feedId = keyName.split(".zip")[0];
@@ -152,18 +154,15 @@ public class ApiMain {
             feedPath = feedId + ".zip";
         }
         try {
-
-            System.out.println("Downloading feed from s3 at " + feedPath);
-
+            LOG.info("Downloading feed from s3 at " + feedPath);
             S3Object object = s3.getObject(
                     new GetObjectRequest(feedBucket, feedPath));
             InputStream obj = object.getObjectContent();
             eTag = object.getObjectMetadata().getETag();
-            System.out.println(eTag);
 
             // create file so we can pass GTFSFeed.fromFile a string file path
             File tempFile = new File(tDir, feedId + ".zip");
-            System.out.println(tempFile.getAbsolutePath());
+            LOG.info("temp file at " + tempFile.getAbsolutePath());
 
             try (FileOutputStream out = new FileOutputStream(tempFile)) {
                 IOUtils.copy(obj, out);
@@ -173,7 +172,7 @@ public class ApiMain {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (AmazonServiceException ase) {
-            System.out.println("Error downloading from s3 for " + feedPath);
+            LOG.error("Error downloading from s3 for " + feedPath);
             ase.printStackTrace();
         }
         return eTag;
@@ -197,60 +196,23 @@ public class ApiMain {
             List<S3ObjectSummary> summaries = gtfsList.getObjectSummaries();
 
             // number of feeds to load is size minus one (because folder is listed here also)
-            System.out.println(summaries.size() - 1 + " feeds to load");
+            LOG.info(summaries.size() - 1 + " feeds to load");
 
             for (S3ObjectSummary objSummary : summaries){
 
+
                 String keyName = objSummary.getKey();
 
-                // drop .zip and any folder prefix
-                String feedId = keyName.split(".zip")[0];
-
-                if (feedId.equals(prefix)){
+                // skip keyName if we're just looking at the prefix
+                if (keyName.equals(prefix)){
                     continue;
                 }
-                if (feedId.contains("/")){
-                    String[] pathParts = feedId.split("/");
-
-                    // feedId equals last part
-                    feedId = pathParts[pathParts.length - 1];
-                }
-                String eTag = objSummary.getETag();
-
-                System.out.println("Loading feed: " + feedId);
-
-                String tDir = System.getProperty("java.io.tmpdir");
-
-                try {
-                    System.out.println("Downloading feed from s3 at " + keyName);
-
-                    S3Object object = s3.getObject(
-                            new GetObjectRequest(feedBucket, keyName));
-                    InputStream obj = object.getObjectContent();
-                    eTag = object.getObjectMetadata().getETag();
-                    System.out.println(eTag);
-
-                    // create file so we can pass GTFSFeed.fromFile a string file path
-                    File tempFile = new File(tDir, feedId + ".zip");
-                    System.out.println(tempFile.getAbsolutePath());
-
-                    try (FileOutputStream out = new FileOutputStream(tempFile)) {
-                        IOUtils.copy(obj, out);
-                    }
-                    ApiMain.feedSources.put(feedId, new FeedSource(tempFile.getAbsolutePath()));
-                    tempFile.deleteOnExit();
-                    eTags.add(eTag);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (AmazonServiceException ase) {
-                    System.out.println("Error downloading from s3 for " + keyName);
-                    ase.printStackTrace();
-                }
-
+                String eTag = loadFeedFromBucket(feedBucket, keyName, prefix);
+                eTags.add(eTag);
                 count++;
             }
             if (count == 0){
-                System.out.println("No feeds found");
+                LOG.info("No feeds found");
             }
         }
         // if feedList != null
