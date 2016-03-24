@@ -50,6 +50,7 @@ public class ApiMain {
         String[] feedList = {"a9b462ce-5c94-429a-8186-28ac84c3a02c"};
 //        List<String> eTags = initialize(s3credentials, workOffline, feedBucket, dataDirectory, feedList, "completed/");
         List<String> eTags = initialize(null, false, "datatools-gtfs-mtc", null, null, "completed/");
+        loadFeedFromBucket(feedBucket, "a9b462ce-5c94-429a-8186-28ac84c3a02c", "completed/");
         System.out.println(eTags);
         Routes.routes("api");
     }
@@ -218,28 +219,34 @@ public class ApiMain {
 
                 System.out.println("Loading feed: " + feedId);
 
-                InputStream obj = s3.getObject(feedBucket, keyName).getObjectContent();
-
                 String tDir = System.getProperty("java.io.tmpdir");
-                // create tempfile so we can pass GTFSFeed.fromFile a string file path
-                File tempFile = null;
-                try {
-                    tempFile = File.createTempFile(tDir, feedId + ".zip");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                tempFile.getAbsolutePath();
 
-                try (FileOutputStream out = new FileOutputStream(tempFile)) {
-                    IOUtils.copy(obj, out);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                try {
+                    System.out.println("Downloading feed from s3 at " + keyName);
+
+                    S3Object object = s3.getObject(
+                            new GetObjectRequest(feedBucket, keyName));
+                    InputStream obj = object.getObjectContent();
+                    eTag = object.getObjectMetadata().getETag();
+                    System.out.println(eTag);
+
+                    // create file so we can pass GTFSFeed.fromFile a string file path
+                    File tempFile = new File(tDir, feedId + ".zip");
+                    System.out.println(tempFile.getAbsolutePath());
+
+                    try (FileOutputStream out = new FileOutputStream(tempFile)) {
+                        IOUtils.copy(obj, out);
+                    }
+                    ApiMain.feedSources.put(feedId, new FeedSource(tempFile.getAbsolutePath()));
+                    tempFile.deleteOnExit();
+                    eTags.add(eTag);
                 } catch (IOException e) {
                     e.printStackTrace();
+                } catch (AmazonServiceException ase) {
+                    System.out.println("Error downloading from s3 for " + keyName);
+                    ase.printStackTrace();
                 }
-                ApiMain.feedSources.put(feedId, new FeedSource(tempFile.getAbsolutePath()));
-                eTags.add(eTag);
-                tempFile.deleteOnExit();
+
                 count++;
             }
             if (count == 0){
