@@ -48,7 +48,8 @@ public class ApiMain {
         feedBucket = ApiMain.config.getProperty("s3.feeds-bucket");
         dataDirectory = ApiMain.config.getProperty("application.data");
         String[] feedList = {"a9b462ce-5c94-429a-8186-28ac84c3a02c"};
-        List<String> eTags = initialize(s3credentials, workOffline, feedBucket, dataDirectory, feedList, "completed/");
+//        List<String> eTags = initialize(s3credentials, workOffline, feedBucket, dataDirectory, feedList, "completed/");
+        List<String> eTags = initialize(null, false, feedBucket, null, feedList, "completed/");
         System.out.println(eTags);
         Routes.routes("api");
     }
@@ -80,7 +81,7 @@ public class ApiMain {
                 // default credentials providers, e.g. IAM role
                 s3 = new AmazonS3Client();
             }
-            return loadFeedsFromBucket(feedList, prefix);
+            return loadFeedsFromBucket(feedBucket, feedList, prefix);
         }
 
         // Use application.data directory from config
@@ -124,7 +125,7 @@ public class ApiMain {
         }
 
     }
-    public static String loadFeedFromBucket(String feedSource, String prefix){
+    public static String loadFeedFromBucket(String feedBucket, String feedSource, String prefix){
         String feedPath;
         String eTag = "";
         String tDir = System.getProperty("java.io.tmpdir");
@@ -162,13 +163,13 @@ public class ApiMain {
         return eTag;
     }
 
-    public static List<String> loadFeedsFromBucket(){
-        return loadFeedsFromBucket(null, null);
+    public static List<String> loadFeedsFromBucket(String feedBucket){
+        return loadFeedsFromBucket(feedBucket, null, null);
     }
-    public static List<String> loadFeedsFromBucket(String prefix){
-        return loadFeedsFromBucket(null, prefix);
+    public static List<String> loadFeedsFromBucket(String feedBucket, String prefix){
+        return loadFeedsFromBucket(feedBucket, null, prefix);
     }
-    public static List<String> loadFeedsFromBucket(String[] feedList, String prefix){
+    public static List<String> loadFeedsFromBucket(String feedBucket, String[] feedList, String prefix){
         List<String> eTags = new ArrayList();
         if (feedList == null){
             if (prefix == null)
