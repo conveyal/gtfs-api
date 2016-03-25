@@ -28,7 +28,7 @@ public class StopsController {
     public static Double radius = 1.0; // default 1 km search radius
     public static Object getStops(Request req, Response res){
 
-        List<Stop> stops = new ArrayList<>();
+        Set<Object> stops = new HashSet<>();
         List<String> feeds = new ArrayList();
 
         if (req.queryParams("feed") != null) {
@@ -39,10 +39,10 @@ public class StopsController {
                 }
             }
             if (feeds.size() == 0){
-                return "Must specify valid feed id.";
+                halt(404, "Must specify valid feed id.");
             }
             // If feed is only param.
-            else if (req.queryParams().size() == 1) {
+            else if (req.queryParams().size() == 1 && req.params("id") == null) {
                 for (String feedId : req.queryParams("feed").split(",")){
                     stops.addAll(ApiMain.feedSources.get(feedId).feed.stops.values());
                 }
@@ -51,8 +51,8 @@ public class StopsController {
         }
         else{
 //            res.body("Must specify valid feed id.");
-            return "Must specify valid feed id.";
-//            halt(404, "Must specify valid feed id.");
+//            return "Must specify valid feed id.";
+            halt(404, "Must specify valid feed id.");
         }
 
 
@@ -93,24 +93,23 @@ public class StopsController {
         // query name
         else if (req.queryParams("name") != null){
             System.out.println(req.queryParams("name"));
-            // TODO: get stops by name with Radix tree
 
             for (String feedId : feeds) {
                 System.out.println("looping feed: " + feedId);
 
-                // Check if feed is specified in feed sources requested
-                // TODO: Check if user has access to feed source? (Put this in the before call.)
-//                if (Arrays.asList(feeds).contains(entry.getKey())) {
-                    System.out.println("checking feed: " + feedId);
+                System.out.println("checking feed: " + feedId);
 
-                    // search query must be in upper case to match radix tree keys
-                    Iterable<Stop> searchResults = ApiMain.feedSources.get(feedId).stopTree.getValuesForClosestKeys(req.queryParams("name").toUpperCase());
-                    // Iterable<Stop> searchResults = ApiMain.stopTree.getValuesForKeysStartingWith(req.queryParams("name").toUpperCase());
-//                    stops = Iterables.toArray(searchResults, Stop.class);
-                    for (Stop stop : searchResults) {
-                        stops.add(stop);
-                    }
-//                }
+                // search query must be in upper case to match radix tree keys
+//              Iterable<Stop> searchResults = ApiMain.feedSources.get(feedId).stopTree.getValuesForClosestKeys(req.queryParams("name").toUpperCase());
+//                Iterable<Stop> searchResults = ApiMain.feedSources.get(feedId).stopTree.getValuesForKeysStartingWith(req.queryParams("name").toUpperCase());
+                Iterable<Stop> searchResults = ApiMain.feedSources.get(feedId).stopTree.getValuesForKeysContaining(req.queryParams("name").toUpperCase());
+//                Iterable<Stop> searchResults = ApiMain.feedSources.get(feedId).stopTree.getValues
+//              stops = Iterables.toArray(searchResults, Stop.class);
+                System.out.println(Iterables.size(searchResults));
+                for (Stop stop : searchResults) {
+                    System.out.println(stop.stop_name);
+                    stops.add(stop);
+                }
             }
             return stops;
         }

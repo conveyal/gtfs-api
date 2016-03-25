@@ -4,12 +4,19 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
-import com.googlecode.concurrenttrees.radix.ConcurrentRadixTree;
-import com.googlecode.concurrenttrees.radix.RadixTree;
+//import com.googlecode.concurrenttrees.radix.ConcurrentRadixTree;
+//import com.googlecode.concurrenttrees.radix.RadixTree;
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory;
+import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree;
+import com.googlecode.concurrenttrees.suffix.SuffixTree;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.index.strtree.STRtree;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by landon on 2/8/16.
@@ -18,8 +25,8 @@ public class FeedSource {
 
     public STRtree routeIndex;
     public STRtree stopIndex;
-    public RadixTree<Stop> stopTree;
-    public RadixTree<Route> routeTree;
+    public SuffixTree<Stop> stopTree;
+    public SuffixTree<Route> routeTree;
     public GTFSFeed feed;
 
     public FeedSource(String path){
@@ -35,13 +42,22 @@ public class FeedSource {
     public void initIndexes(){
         // Initialize and build route radix tree and spatial index
         this.routeIndex = new STRtree();
-        this.routeTree = new ConcurrentRadixTree<Route>(new DefaultCharArrayNodeFactory());
+        this.routeTree = new ConcurrentSuffixTree<Route>( new DefaultCharArrayNodeFactory() ) {};
 
         // spatial
+        Set<Route> indexedRoutes = new HashSet<>();
         for (Pattern pattern : this.feed.patterns.values()){
-//            Envelope routeEnvelope = pattern.geometry.getEnvelopeInternal();
-            Envelope routeEnvelope = new Envelope(pattern.geometry.getCentroid().getCoordinate());
-            this.routeIndex.insert(routeEnvelope, this.feed.trips.get(pattern.associatedTrips.get(0)).route);
+            Route currentRoute = this.feed.trips.get(pattern.associatedTrips.get(0)).route;
+//          TODO: check if list of routes already contains current route
+            if (!indexedRoutes.contains(currentRoute)){
+                //            System.out.println(this.feed.trips.get(pattern.associatedTrips.get(0)).trip_headsign);
+                Envelope routeEnvelope = pattern.geometry.getEnvelopeInternal();
+//            Envelope routeEnvelope = new Envelope(pattern.geometry.getEndPoint().getCoordinate());
+//            Envelope routeEnvelope = new Envelope(new Coordinate(-122.0, 37.0));
+//            Envelope routeEnvelope = new Envelope(pattern.geometry.getCentroid().getCoordinate());
+                this.routeIndex.insert(routeEnvelope, pattern);
+                indexedRoutes.add(currentRoute);
+            }
         }
         this.routeIndex.build();
 
@@ -57,7 +73,7 @@ public class FeedSource {
 
         // Initialize and build stop radix tree and spatial index
         this.stopIndex = new STRtree();
-        this.stopTree = new ConcurrentRadixTree<Stop>(new DefaultCharArrayNodeFactory());
+        this.stopTree = new ConcurrentSuffixTree<Stop>( new DefaultCharArrayNodeFactory() );
         for (Stop stop : this.feed.stops.values()){
             // spatial
             Coordinate stopCoords = new Coordinate(stop.stop_lon, stop.stop_lat);
