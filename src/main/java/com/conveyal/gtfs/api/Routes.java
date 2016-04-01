@@ -70,6 +70,8 @@ public class Routes {
 
         get(prefix + "/", (request, response) -> "GTFS Api");
 
+        get(prefix + "/graphql", GraphQLController::get, json);
+
         after((req, res) -> {
             res.header("Access-Control-Allow-Origin", "*");
             res.type("application/json");

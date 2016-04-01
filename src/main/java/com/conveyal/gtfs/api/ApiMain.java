@@ -96,16 +96,13 @@ public class ApiMain {
             int count = 0;
             for (File file  : folder.listFiles()) {
                 if (file.getName().endsWith(".zip")){
-
-                    // drop .zip
-                    String feedId = file.getName().split(".zip")[0];
                     String feedPath = file.getAbsolutePath();
-                    LOG.info("Loading feed: " + feedId + " at " + feedPath);
+                    System.out.println("Loading feed at " + feedPath);
+                    FeedSource fs = new FeedSource(feedPath);
+                    ApiMain.feedSources.put(fs.feed.feedId, fs);
 
-                    // TODO: use gtfs-lib provided feedId (feedId from feed or filename minus ".zip"
-                    ApiMain.feedSources.put(feedId, new FeedSource(feedPath));
                     count++;
-                    fileList.add(feedId);
+                    fileList.add(fs.feed.feedId);
 
                     // TODO: use md5?
 //                    MessageDigest md = null;

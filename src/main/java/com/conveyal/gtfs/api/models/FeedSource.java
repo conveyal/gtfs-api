@@ -30,10 +30,13 @@ public class FeedSource {
     public GTFSFeed feed;
 
     public FeedSource(String path){
-        this.feed = GTFSFeed.fromFile(path);
+        this(GTFSFeed.fromFile(path));
+    }
+
+    public FeedSource (GTFSFeed feed) {
+        this.feed = feed;
         feed.findPatterns();
         initIndexes();
-
     }
 
     public void initIndexes(){
