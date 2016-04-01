@@ -113,6 +113,32 @@ public class StopsController {
             }
             return stops;
         }
+        // query for route_id (i.e., get all stops that exist in patterns for a given route)
+        else if (req.queryParams("route") != null){
+            System.out.println(req.queryParams("route"));
+            String routeId = req.queryParams("route");
+            
+            // loop through feeds
+            for (String feedId : feeds) {
+                Set<String> stopIds = new HashSet<>();
+                // loop through patterns, check for route and return pattern stops
+                for (Pattern pattern : ApiMain.feedSources.get(feedId).feed.patterns.values()) {
+                    for (Route route : pattern.associatedRoutes){
+                        if (routeId.equals(route.route_id)){
+                            stopIds.addAll(pattern.orderedStops);
+                            break;
+                        }
+                    }
+                }
+
+                for (String stopId : stopIds) {
+                    Stop stop = ApiMain.feedSources.get(feedId).feed.stops.get(stopId);
+                    System.out.println(stopId);
+                    stops.add(stop);
+                }
+            }
+            return stops;
+        }
 
         return null;
     }
