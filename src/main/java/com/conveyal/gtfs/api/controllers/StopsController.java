@@ -16,6 +16,7 @@ import spark.Request;
 import spark.Response;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Maps;
 
@@ -28,7 +29,7 @@ public class StopsController {
     public static Double radius = 1.0; // default 1 km search radius
     public static Object getStops(Request req, Response res){
 
-        Set<Object> stops = new HashSet<>();
+        Set<Stop> stops = new HashSet<>();
         List<String> feeds = new ArrayList();
 
         if (req.queryParams("feed") != null) {
@@ -42,11 +43,11 @@ public class StopsController {
                 halt(404, "Must specify valid feed id.");
             }
             // If feed is only param.
-            else if (req.queryParams().size() == 1 && req.params("id") == null) {
+            else if (req.params("id") == null) {
+                stops = new HashSet<>();
                 for (String feedId : req.queryParams("feed").split(",")){
                     stops.addAll(ApiMain.feedSources.get(feedId).feed.stops.values());
                 }
-                return stops;
             }
         }
         else{
@@ -66,7 +67,7 @@ public class StopsController {
         }
         // bounding box
         else if (req.queryParams("max_lat") != null && req.queryParams("max_lon") != null && req.queryParams("min_lat") != null && req.queryParams("min_lon") != null){
-
+            stops = new HashSet<>();
             Coordinate maxCoordinate = new Coordinate(Double.valueOf(req.queryParams("max_lon")), Double.valueOf(req.queryParams("max_lat")));
             Coordinate minCoordinate = new Coordinate(Double.valueOf(req.queryParams("min_lon")), Double.valueOf(req.queryParams("min_lat")));
             Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
@@ -75,10 +76,11 @@ public class StopsController {
                 List<Stop> searchResults = ApiMain.feedSources.get(feedId).stopIndex.query(searchEnvelope);
                 stops.addAll(searchResults);
             }
-            return stops;
+            return limitStops(req, stops);
         }
         // lat lon + radius
         else if (req.queryParams("lat") != null && req.queryParams("lon") != null){
+            stops = new HashSet<>();
             Coordinate latLon = new Coordinate(Double.valueOf(req.queryParams("lon")), Double.valueOf(req.queryParams("lat")));
             if (req.queryParams("radius") != null){
                 StopsController.radius = Double.valueOf(req.queryParams("radius"));
@@ -88,10 +90,11 @@ public class StopsController {
                 List<Stop> searchResults = ApiMain.feedSources.get(feedId).stopIndex.query(searchEnvelope);
                 stops.addAll(searchResults);
             }
-            return stops;
+            return limitStops(req, stops);
         }
         // query name
         else if (req.queryParams("name") != null){
+            stops = new HashSet<>();
             System.out.println(req.queryParams("name"));
 
             for (String feedId : feeds) {
@@ -111,13 +114,21 @@ public class StopsController {
                     stops.add(stop);
                 }
             }
-            return stops;
+            return limitStops(req, stops);
         }
         // query for route_id (i.e., get all stops that exist in patterns for a given route)
         else if (req.queryParams("route") != null){
-            System.out.println(req.queryParams("route"));
+            return getStopsForRoute(req, feeds);
+        }
+
+        return limitStops(req, stops);
+    }
+    
+    public static Set<Stop> getStopsForRoute(Request req, List<String> feeds){
+        if (req.queryParams("route") != null){
             String routeId = req.queryParams("route");
-            
+            System.out.println(routeId);
+            Set<Stop> stops = new HashSet<>();
             // loop through feeds
             for (String feedId : feeds) {
                 Set<String> stopIds = new HashSet<>();
@@ -137,10 +148,16 @@ public class StopsController {
                     stops.add(stop);
                 }
             }
-            return stops;
+            return limitStops(req, stops);
         }
-
         return null;
+    }
+
+    public static Set<Stop> limitStops(Request req, Set<Stop> stops) {
+        if (req.queryParams("limit") != null)
+            return stops.stream().limit(Long.valueOf(req.queryParams("limit"))).collect(Collectors.toSet());
+        else
+            return stops;
     }
 
 }
