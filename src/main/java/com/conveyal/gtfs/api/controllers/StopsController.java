@@ -45,7 +45,7 @@ public class StopsController {
             // If feed is only param.
             else if (req.params("id") == null) {
                 stops = new HashSet<>();
-                for (String feedId : req.queryParams("feed").split(",")){
+                for (String feedId : feeds){
                     stops.addAll(ApiMain.feedSources.get(feedId).feed.stops.values());
                 }
             }
