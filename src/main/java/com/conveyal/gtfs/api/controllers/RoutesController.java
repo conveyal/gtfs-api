@@ -12,9 +12,8 @@ import com.conveyal.gtfs.api.ApiMain;
 import spark.Request;
 import spark.Response;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import com.google.common.collect.Maps;
 import java.util.Map.Entry;
 
@@ -109,6 +108,25 @@ public class RoutesController {
             return routes;
         }
 
+        return null;
+    }
+
+    public static Set<Route> getRoutesForStop(Request req, List<String> feeds){
+        if (req.queryParams("stop") != null){
+            String stopId = req.queryParams("stop");
+            System.out.println(stopId);
+            Set<Route> routes = new HashSet<>();
+            // loop through feeds
+            for (String feedId : feeds) {
+                // loop through patterns, check for route and return pattern stops
+                for (Pattern pattern : ApiMain.feedSources.get(feedId).feed.patterns.values()) {
+                    if (pattern.orderedStops.contains(stopId)){
+                        routes.addAll(pattern.associatedRoutes);
+                    }
+                }
+            }
+            return routes;
+        }
         return null;
     }
 
