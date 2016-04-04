@@ -107,6 +107,10 @@ public class RoutesController {
 
             return routes;
         }
+        // query for stop_id (i.e., get all routes that operate along patterns for a given stop)
+        else if (req.queryParams("stop") != null){
+            return getRoutesForStop(req, feeds);
+        }
 
         return null;
     }
