@@ -24,7 +24,7 @@ public class Routes {
         if (!prefix.startsWith("/") && !prefix.equals("")){
             prefix = "/" + prefix;
         }
-        //  port(5678); <- Uncomment this if you want spark to listen to port 5678 in stead of the default 4567
+        //  port(5678); // <- Uncomment this if you want spark to listen to port 5678 in stead of the default 4567
 
         get(prefix + "/hello", (request, response) -> "Hello, you!");
         get(prefix + "/feeds", FeedController::getFeeds, json);
@@ -72,9 +72,5 @@ public class Routes {
 
         get(prefix + "/graphql", GraphQLController::get, json);
 
-        after((req, res) -> {
-            res.header("Access-Control-Allow-Origin", "*");
-            res.type("application/json");
-        });
     }
 }
