@@ -10,6 +10,8 @@ import com.amazonaws.services.s3.model.*;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.google.common.collect.Maps;
+//import com.google.common.io.Files;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -91,47 +93,77 @@ public class ApiMain {
 
         // Use application.data directory from config
         else{
-            List<String> fileList = new ArrayList<>();
-            final File folder = new File(dataDirectory);
-            int count = 0;
-            for (File file  : folder.listFiles()) {
-                if (file.getName().endsWith(".zip")){
-                    String feedPath = file.getAbsolutePath();
-                    System.out.println("Loading feed at " + feedPath);
-                    FeedSource fs = new FeedSource(feedPath);
-                    ApiMain.feedSources.put(fs.feed.feedId, fs);
-
-                    count++;
-                    fileList.add(fs.feed.feedId);
-
-                    // TODO: use md5?
-//                    MessageDigest md = null;
-//                    try {
-//                        md = MessageDigest.getInstance("MD5");
-//                    } catch (NoSuchAlgorithmException e) {
-//                        e.printStackTrace();
-//                    }
-//                    try (InputStream is = Files.newInputStream(Paths.get(feedPath));
-//                         DigestInputStream dis = new DigestInputStream(is, md))
-//                    {
-//                    /* Read decorated stream (dis) to EOF as normal... */
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                    byte[] digest = md.digest();
+            if (feedList == null) {
+                return loadFeedsFromDirectory(dataDirectory);
+            }
+            else {
+                List<String> eTagList = new ArrayList<>();
+                for (String feed : feedList) {
+                    eTagList.add(loadFeedFromPath(dataDirectory + "/" + feed));
                 }
+                return eTagList;
             }
-            if (count == 0){
-                LOG.info("No feeds found");
-            }
-            return fileList;
         }
-
     }
-    public static String loadFeedFromBucket(String feedBucket, String keyName, String prefix){
 
-        // drop .zip and any folder prefix
-        String feedId = keyName.split(".zip")[0];
+    public static String getMd5(File file) {
+        byte[] bytesOfMessage = new byte[0];
+        try {
+            bytesOfMessage = Files.readAllBytes(file.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        byte[] md5 = md.digest(bytesOfMessage);
+
+        String hashtext = DigestUtils.md5Hex(md5);
+
+        return hashtext;
+    }
+
+    public static List<String> loadFeedsFromDirectory(String dir) {
+        List<String> eTagList = new ArrayList<>();
+        final File folder = new File(dir);
+        int count = 0;
+        for (File file  : folder.listFiles()) {
+            if (file.getName().endsWith(".zip")){
+                String feedPath = file.getAbsolutePath();
+                String eTag = loadFeedFromPath(feedPath);
+                count++;
+                eTagList.add(eTag);
+            }
+        }
+        if (count == 0){
+            LOG.info("No feeds found");
+        }
+        return eTagList;
+    }
+
+    public static String loadFeedFromPath(String path){
+        System.out.println("Loading feed at " + path);
+        FeedSource fs = new FeedSource(path);
+        String feedId = getFeedIdFromPath(path);
+        ApiMain.feedSources.put(feedId, fs);
+        File tempFile = new File(path);
+        tempFile.deleteOnExit();
+        return getMd5(tempFile);
+    }
+
+    public static String loadFeedFromFile(File file){
+        String path = file.getAbsolutePath();
+        System.out.println("Loading feed at " + path);
+        FeedSource fs = new FeedSource(path);
+        ApiMain.feedSources.put(fs.feed.feedId, fs);
+        return getMd5(file);
+    }
+
+    public static String getFeedIdFromPath(String path) {
+        String feedId = path.split(".zip")[0];
 
         if (feedId.contains("/")){
             String[] pathParts = feedId.split("/");
@@ -139,6 +171,13 @@ public class ApiMain {
             // feedId equals last part
             feedId = pathParts[pathParts.length - 1];
         }
+        return feedId;
+    }
+
+    public static String loadFeedFromBucket(String feedBucket, String keyName, String prefix){
+
+        // drop .zip and any folder prefix
+        String feedId = getFeedIdFromPath(keyName);
 
         String feedPath;
         String eTag = "";
