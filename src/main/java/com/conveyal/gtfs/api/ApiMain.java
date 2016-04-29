@@ -68,6 +68,9 @@ public class ApiMain {
     public static List<String> initialize(String dataDirectory) throws IOException {
         return initialize(null, true, "", dataDirectory, null, null);
     }
+    public static List<String> initialize(String dataDirectory, String[] feedList) throws IOException {
+        return initialize(null, true, "", dataDirectory, feedList, null);
+    }
     public static List<String> initialize(String s3credentials, Boolean workOffline, String feedBucket, String dataDirectory) {
         return initialize(s3credentials, workOffline, feedBucket, dataDirectory, null, null);
     }
@@ -98,11 +101,7 @@ public class ApiMain {
                 return loadFeedsFromDirectory(dataDirectory);
             }
             else {
-                List<String> eTagList = new ArrayList<>();
-                for (String feed : feedList) {
-                    eTagList.add(loadFeedFromPath(dataDirectory + "/" + feed));
-                }
-                return eTagList;
+                return loadFeedsFromDirectory(dataDirectory, feedList);
             }
         }
     }
@@ -144,7 +143,13 @@ public class ApiMain {
         }
         return eTagList;
     }
-
+    public static List<String> loadFeedsFromDirectory(String dir, String[] feedList) {
+        List<String> eTagList = new ArrayList<>();
+        for (String feed : feedList) {
+            eTagList.add(loadFeedFromPath(dir + "/" + feed));
+        }
+        return eTagList;
+    }
     public static String loadFeedFromPath(String path){
         String feedId = getFeedIdFromPath(path);
         return loadFeedFromPath(path, feedId);
