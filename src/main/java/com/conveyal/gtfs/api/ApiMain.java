@@ -55,9 +55,10 @@ public class ApiMain {
         dataDirectory = ApiMain.config.getProperty("application.data");
         String[] feedList = {"a9b462ce-5c94-429a-8186-28ac84c3a02c"};
 //        List<String> eTags = initialize(s3credentials, workOffline, feedBucket, dataDirectory, feedList, "completed/");
-        List<String> eTags = initialize(null, false, "datatools-gtfs-mtc", null, null, "completed/");
-        loadFeedFromBucket(feedBucket, "a9b462ce-5c94-429a-8186-28ac84c3a02c", "completed/");
-        LOG.info(eTags.toString());
+//        List<String> eTags = initialize(null, false, "datatools-gtfs-mtc", null, null, "completed/");
+        loadFeedsFromDirectory(dataDirectory);
+//        loadFeedFromBucket(feedBucket, "a9b462ce-5c94-429a-8186-28ac84c3a02c", "completed/");
+//        LOG.info(eTags.toString());
         Routes.routes("api");
     }
 
@@ -151,11 +152,18 @@ public class ApiMain {
 
     public static String loadFeedFromPath(String path, String feedId){
         System.out.println("Loading feed " + feedId + " at " + path);
-        FeedSource fs = new FeedSource(path, feedId);
-        ApiMain.feedSources.put(feedId, fs);
-        File tempFile = new File(path);
-        tempFile.deleteOnExit();
-        return getMd5(tempFile);
+        FeedSource fs;
+        try {
+            fs = new FeedSource(path, feedId);
+            ApiMain.feedSources.put(feedId, fs);
+            File tempFile = new File(path);
+            tempFile.deleteOnExit();
+            return getMd5(tempFile);
+
+        } catch (RuntimeException e) {
+            LOG.error(e.getMessage());
+        }
+        return null;
     }
 
     public static String loadFeedFromFile(File file){
@@ -167,9 +175,15 @@ public class ApiMain {
     public static String loadFeedFromFile(File file, String feedId){
         String path = file.getAbsolutePath();
         System.out.println("Loading feed " + feedId + " at " + path);
-        FeedSource fs = new FeedSource(path, feedId);
-        ApiMain.feedSources.put(feedId, fs);
-        return getMd5(file);
+        FeedSource fs;
+        try {
+            fs = new FeedSource(path, feedId);
+            ApiMain.feedSources.put(feedId, fs);
+            return getMd5(file);
+        } catch (RuntimeException e) {
+            LOG.error(e.getMessage());
+        }
+        return null;
     }
 
     public static String getFeedIdFromPath(String path) {
