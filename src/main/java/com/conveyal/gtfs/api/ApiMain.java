@@ -151,7 +151,7 @@ public class ApiMain {
 
     public static String loadFeedFromPath(String path, String feedId){
         System.out.println("Loading feed " + feedId + " at " + path);
-        FeedSource fs = new FeedSource(path);
+        FeedSource fs = new FeedSource(path, feedId);
         ApiMain.feedSources.put(feedId, fs);
         File tempFile = new File(path);
         tempFile.deleteOnExit();
@@ -167,7 +167,7 @@ public class ApiMain {
     public static String loadFeedFromFile(File file, String feedId){
         String path = file.getAbsolutePath();
         System.out.println("Loading feed " + feedId + " at " + path);
-        FeedSource fs = new FeedSource(path);
+        FeedSource fs = new FeedSource(path, feedId);
         ApiMain.feedSources.put(feedId, fs);
         return getMd5(file);
     }

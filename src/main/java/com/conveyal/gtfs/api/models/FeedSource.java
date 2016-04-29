@@ -33,6 +33,10 @@ public class FeedSource {
         this(GTFSFeed.fromFile(path));
     }
 
+    public FeedSource(String path, String feedId){
+        this(GTFSFeed.fromFile(path, feedId));
+    }
+
     public FeedSource (GTFSFeed feed) {
         this.feed = feed;
         feed.findPatterns();
