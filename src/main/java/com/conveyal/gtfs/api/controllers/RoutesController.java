@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.api.controllers;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.api.util.GeomUtil;
 import com.conveyal.gtfs.model.*;
 
@@ -43,7 +44,9 @@ public class RoutesController {
             // If feed is only param.
             else if (req.queryParams().size() == 1 && req.params("id") == null) {
                 for (String feedId : req.queryParams("feed").split(",")){
-                    routes.addAll(ApiMain.feedSources.get(feedId).feed.routes.values());
+                    FeedSource feedSource = ApiMain.feedSources.get(feedId);
+                    if (feedSource != null)
+                        routes.addAll(feedSource.feed.routes.values());
                 }
                 return routes;
             }
