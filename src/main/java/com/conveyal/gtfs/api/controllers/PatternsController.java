@@ -58,7 +58,7 @@ public class PatternsController {
         Multimap<String, String> tripsByPattern = HashMultimap.create();
         for (Trip trip : feed.trips.values()) {
             // not horribly inefficient to filter this way, there aren't that many trips
-            if (trip.route != route) continue;
+            if (!trip.route_id.equals(route.route_id)) continue;
             tripsByPattern.put(feed.tripPatternMap.get(trip.trip_id), trip.trip_id);
         }
 

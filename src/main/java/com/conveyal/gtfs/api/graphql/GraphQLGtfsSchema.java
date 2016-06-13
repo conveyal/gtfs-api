@@ -91,7 +91,7 @@ public class GraphQLGtfsSchema {
             )
             .field(newFieldDefinition()
                     .type(lineStringType)
-                    .dataFetcher(new FieldDataFetcher("geometry"))
+                    .dataFetcher(new WrappedEntityFieldFetcher("geometry"))
                     .name("geometry")
                     .build()
             )
@@ -185,7 +185,7 @@ public class GraphQLGtfsSchema {
         return newFieldDefinition()
                 .name(name)
                 .type(GraphQLString)
-                .dataFetcher(new FieldDataFetcher(name))
+                .dataFetcher(new WrappedEntityFieldFetcher(name))
                 .build();
     }
 
@@ -193,7 +193,7 @@ public class GraphQLGtfsSchema {
         return newFieldDefinition()
                 .name(name)
                 .type(GraphQLInt)
-                .dataFetcher(new FieldDataFetcher(name))
+                .dataFetcher(new WrappedEntityFieldFetcher(name))
                 .build();
     }
 
@@ -201,7 +201,7 @@ public class GraphQLGtfsSchema {
         return newFieldDefinition()
                 .name(name)
                 .type(GraphQLFloat)
-                .dataFetcher(new FieldDataFetcher(name))
+                .dataFetcher(new WrappedEntityFieldFetcher(name))
                 .build();
     }
 

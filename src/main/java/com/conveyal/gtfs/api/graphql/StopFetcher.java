@@ -21,7 +21,7 @@ public class StopFetcher {
     private static final Logger LOG = LoggerFactory.getLogger(StopFetcher.class);
 
     /** top level stops query (i.e. not inside a stoptime etc) */
-    public static List<Stop> apex(DataFetchingEnvironment env) {
+    public static List<WrappedGTFSEntity<Stop>> apex(DataFetchingEnvironment env) {
         Map<String, Object> args = env.getArguments();
 
         Collection<FeedSource> feeds;
@@ -33,7 +33,7 @@ public class StopFetcher {
             feeds = ApiMain.feedSources.values();
         }
 
-        List<Stop> stops = new ArrayList<>();
+        List<WrappedGTFSEntity<Stop>> stops = new ArrayList<>();
 
         for (FeedSource feed : feeds) {
             if (args.get("stop_id") != null) {
@@ -41,35 +41,41 @@ public class StopFetcher {
                 stopId.stream()
                         .filter(feed.feed.stops::containsKey)
                         .map(feed.feed.stops::get)
+                        .map(s -> new WrappedGTFSEntity(feed.id, s))
                         .forEach(stops::add);
             }
             else {
-                stops.addAll(feed.feed.stops.values());
+                feed.feed.stops.values().stream()
+                        .map(s -> new WrappedGTFSEntity(feed.id, s))
+                        .forEach(stops::add);
             }
         }
 
         return stops;
     }
 
-    public static List<Stop> fromPattern(DataFetchingEnvironment environment) {
-        Pattern pattern = (Pattern) environment.getSource();
+    public static List<WrappedGTFSEntity<Stop>> fromPattern(DataFetchingEnvironment environment) {
+        WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) environment.getSource();
 
-        if (pattern.associatedTrips.isEmpty()) {
+        if (pattern.entity.associatedTrips.isEmpty()) {
             LOG.warn("Empty pattern!");
             return Collections.emptyList();
         }
 
-        GTFSFeed feed = ApiMain.feedSources.get(pattern.feed_id).feed;
+        FeedSource source = ApiMain.feedSources.get(pattern.feedUniqueId);
 
-        return feed.getOrderedStopListForTrip(pattern.associatedTrips.get(0))
+        return source.feed.getOrderedStopListForTrip(pattern.entity.associatedTrips.get(0))
                 .stream()
-                .map(feed.stops::get)
+                .map(source.feed.stops::get)
+                .map(s -> new WrappedGTFSEntity<>(source.id, s))
                 .collect(Collectors.toList());
     }
 
-    public static List<Stop> fromFeed(DataFetchingEnvironment environment) {
-        FeedInfo fi = (FeedInfo) environment.getSource();
-        GTFSFeed feed = ApiMain.feedSources.get(fi.feed_id).feed;
-        return new ArrayList<>(feed.stops.values());
+    public static List<WrappedGTFSEntity<Stop>> fromFeed(DataFetchingEnvironment environment) {
+        WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) environment.getSource();
+        FeedSource source = ApiMain.feedSources.get(fi.feedUniqueId);
+        return source.feed.stops.values().stream()
+                .map(s -> new WrappedGTFSEntity<>(source.id, s))
+                .collect(Collectors.toList());
     }
 }

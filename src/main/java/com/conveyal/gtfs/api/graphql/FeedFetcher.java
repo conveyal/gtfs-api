@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
  * Created by matthewc on 3/10/16.
  */
 public class FeedFetcher {
-    public static List<FeedInfo> apex(DataFetchingEnvironment environment) {
+    public static List<WrappedGTFSEntity<FeedInfo>> apex(DataFetchingEnvironment environment) {
         List<String> feedIds = environment.getArgument("feed_id");
         if (feedIds != null) {
             return feedIds.stream()
@@ -29,7 +29,7 @@ public class FeedFetcher {
                             ret.feed_id = fs.feed.feedId;
                         }
 
-                        return ret;
+                        return new WrappedGTFSEntity<>(fs.id, ret);
                     })
                     .collect(Collectors.toList());
         }
@@ -47,7 +47,7 @@ public class FeedFetcher {
                             ret.feed_id = fs.feed.feedId;
                         }
 
-                        return ret;
+                        return new WrappedGTFSEntity<>(fs.id, ret);
                     })
                     .collect(Collectors.toList());
         }

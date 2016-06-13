@@ -18,37 +18,30 @@ import java.util.stream.StreamSupport;
  * Fetch trip data given a route.
  */
 public class TripDataFetcher {
-    public static List<Trip> fromRoute(DataFetchingEnvironment dataFetchingEnvironment) {
-        Route route = (Route) dataFetchingEnvironment.getSource();
-        // TODO huge hack, figure out how to inject this down
-        FeedSource feed = ApiMain.feedSources.values().stream()
-                .filter(s -> s.feed.routes.get(route.route_id) == route)
-                .findFirst().orElse(null);
+    public static List<WrappedGTFSEntity<Trip>> fromRoute(DataFetchingEnvironment dataFetchingEnvironment) {
+        WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
+        FeedSource feed = ApiMain.feedSources.get(route.feedUniqueId);
 
         return feed.feed.trips.values().stream()
-                .filter(t -> t.route == route)
+                .filter(t -> t.route_id.equals(route.entity.route_id))
+                .map(t -> new WrappedGTFSEntity<>(feed.id, t))
                 .collect(Collectors.toList());
     }
 
-    public static List<Trip> fromPattern (DataFetchingEnvironment env) {
-        Pattern pattern = (Pattern) env.getSource();
+    public static List<WrappedGTFSEntity<Trip>> fromPattern (DataFetchingEnvironment env) {
+        WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
 
-        // TODO huge hack, figure out how to inject this down
-        FeedSource feed = ApiMain.feedSources.values().stream()
-                .filter(s -> s.feed.patterns.get(pattern.pattern_id) == pattern)
-                .findFirst().orElse(null);
-
-        return pattern.associatedTrips.stream().map(feed.feed.trips::get).collect(Collectors.toList());
+        FeedSource feed = ApiMain.feedSources.get(pattern.feedUniqueId);
+        return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get)
+                .map(t -> new WrappedGTFSEntity<>(feed.id, t))
+                .collect(Collectors.toList());
     }
 
     public static Integer getStartTime(DataFetchingEnvironment env) {
-        Trip trip = (Trip) env.getSource();
-        // TODO hack
-        FeedSource feed = ApiMain.feedSources.values().stream()
-                .filter(s -> s.feed.trips.get(trip.trip_id) == trip)
-                .findFirst().orElse(null);
+        WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
+        FeedSource feed = ApiMain.feedSources.get(trip.feedUniqueId);
 
-        for (StopTime st : feed.feed.getOrderedStopTimesForTrip(trip.trip_id)) {
+        for (StopTime st : feed.feed.getOrderedStopTimesForTrip(trip.entity.trip_id)) {
             return st.arrival_time;
         }
 
@@ -56,16 +49,13 @@ public class TripDataFetcher {
     }
 
     public static Integer getDuration(DataFetchingEnvironment env) {
-        Trip trip = (Trip) env.getSource();
-        // TODO hack
-        FeedSource feed = ApiMain.feedSources.values().stream()
-                .filter(s -> s.feed.trips.get(trip.trip_id) == trip)
-                .findFirst().orElse(null);
+        WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
+        FeedSource feed = ApiMain.feedSources.get(trip.feedUniqueId);
 
         int firstArrival = StopTime.INT_MISSING;
         int lastDeparture = StopTime.INT_MISSING;
 
-        for (StopTime st : feed.feed.getOrderedStopTimesForTrip(trip.trip_id)) {
+        for (StopTime st : feed.feed.getOrderedStopTimesForTrip(trip.entity.trip_id)) {
             if (firstArrival == StopTime.INT_MISSING) firstArrival = st.arrival_time;
             lastDeparture = st.departure_time;
         }

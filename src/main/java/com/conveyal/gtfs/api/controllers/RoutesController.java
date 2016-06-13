@@ -126,9 +126,12 @@ public class RoutesController {
             // loop through feeds
             for (String feedId : feeds) {
                 // loop through patterns, check for route and return pattern stops
-                for (Pattern pattern : ApiMain.feedSources.get(feedId).feed.patterns.values()) {
+                FeedSource source = ApiMain.feedSources.get(feedId);
+                for (Pattern pattern : source.feed.patterns.values()) {
                     if (pattern.orderedStops.contains(stopId)){
-                        routes.addAll(pattern.associatedRoutes);
+                        pattern.associatedRoutes.stream()
+                                .map(source.feed.routes::get)
+                                .forEach(routes::add);
                     }
                 }
             }

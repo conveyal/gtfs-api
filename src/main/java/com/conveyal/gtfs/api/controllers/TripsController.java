@@ -71,7 +71,7 @@ public class TripsController {
             System.out.println(route_id);
             GTFSFeed feed = ApiMain.feedSources.get(feeds.get(0)).feed;
             List<Trip> tripsForRoute = feed.trips.values()
-                    .stream().filter(t -> t.route.route_id.equals(route_id)).collect(Collectors.toList());
+                    .stream().filter(t -> t.route_id.equals(route_id)).collect(Collectors.toList());
             System.out.println(tripsForRoute.toString());
             tripsForRoute.stream().map(t -> new TripSummary(t, feed)).forEach(trips::add);
             return trips;
@@ -123,7 +123,7 @@ public class TripsController {
         public int trip_length_seconds;
 
         public TripSummary (Trip trip, GTFSFeed feed) {
-            route = trip.route;
+            route = feed.routes.get(trip.route_id);
             //service = trip.service;
             trip_id = trip.trip_id;
             trip_headsign = trip.trip_headsign;
@@ -133,7 +133,7 @@ public class TripsController {
             shape_id = trip.shape_id;
             bikes_allowed = trip.bikes_allowed;
             wheelchair_accessible = trip.wheelchair_accessible;
-            frequencies = trip.frequencies;
+            frequencies = feed.getFrequencies(trip.trip_id);
 
             Iterable<StopTime> stopTimes = feed.getOrderedStopTimesForTrip(trip_id);
 

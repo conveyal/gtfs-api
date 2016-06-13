@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * Created by matthewc on 3/10/16.
  */
 public class RouteFetcher {
-    public static List<Route> apex (DataFetchingEnvironment environment) {
+    public static List<WrappedGTFSEntity<Route>> apex (DataFetchingEnvironment environment) {
         Map<String, Object> args = environment.getArguments();
 
         Collection<FeedSource> feeds;
@@ -29,7 +29,7 @@ public class RouteFetcher {
             feeds = ApiMain.feedSources.values();
         }
 
-        List<Route> routes = new ArrayList<>();
+        List<WrappedGTFSEntity<Route>> routes = new ArrayList<>();
 
         for (FeedSource feed : feeds) {
             if (args.get("route_id") != null) {
@@ -37,30 +37,34 @@ public class RouteFetcher {
                 routeId.stream()
                         .filter(feed.feed.routes::containsKey)
                         .map(feed.feed.routes::get)
+                        .map(r -> new WrappedGTFSEntity(feed.id, r))
                         .forEach(routes::add);
             }
             else {
-                routes.addAll(feed.feed.routes.values());
+                feed.feed.routes.values().stream().map(r -> new WrappedGTFSEntity<>(feed.id, r)).forEach(routes::add);
             }
         }
 
         return routes;
     }
 
-    public static List<Route> forFeed(DataFetchingEnvironment environment) {
-        FeedInfo fi = (FeedInfo) environment.getSource();
+    public static List<WrappedGTFSEntity<Route>> forFeed(DataFetchingEnvironment environment) {
+        WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) environment.getSource();
         List<String> routeIds = environment.getArgument("route_id");
 
-        GTFSFeed feed = ApiMain.feedSources.get(fi.feed_id).feed;
+        FeedSource feed = ApiMain.feedSources.get(fi.feedUniqueId);
 
         if (routeIds != null) {
             return routeIds.stream()
-                    .filter(feed.routes::containsKey)
-                    .map(feed.routes::get)
+                    .filter(feed.feed.routes::containsKey)
+                    .map(feed.feed.routes::get)
+                    .map(r -> new WrappedGTFSEntity<>(feed.id, r))
                     .collect(Collectors.toList());
         }
         else {
-            return new ArrayList<>(feed.routes.values());
+            return feed.feed.routes.values().stream()
+                    .map(r -> new WrappedGTFSEntity<>(feed.id, r))
+                    .collect(Collectors.toList());
         }
     }
 }
