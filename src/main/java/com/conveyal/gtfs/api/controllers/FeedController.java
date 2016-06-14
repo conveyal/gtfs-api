@@ -10,10 +10,10 @@ import spark.Response;
 public class FeedController {
     public static Object getFeeds(Request req, Response res){
         if (req.params().size() == 0 && req.queryParams().size() == 0){
-            return ApiMain.feedSources.keySet();
+            return ApiMain.registeredFeedSources;
         }
         if (req.params("id") != null){
-            return ApiMain.feedSources.get(req.params("id")).feed.agency.values();
+            return ApiMain.getFeedSource(req.params("id")).feed.agency.values();
         }
         return null;
     }

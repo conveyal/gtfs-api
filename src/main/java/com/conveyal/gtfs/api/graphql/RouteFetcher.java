@@ -22,12 +22,8 @@ public class RouteFetcher {
 
         Collection<FeedSource> feeds;
 
-        if (args.get("feed_id") != null) {
-            List<String> feedId = (List<String>) args.get("feed_id");
-            feeds = feedId.stream().map(ApiMain.feedSources::get).collect(Collectors.toList());
-        } else {
-            feeds = ApiMain.feedSources.values();
-        }
+        List<String> feedId = (List<String>) args.get("feed_id");
+        feeds = feedId.stream().map(ApiMain::getFeedSource).collect(Collectors.toList());
 
         List<WrappedGTFSEntity<Route>> routes = new ArrayList<>();
 
@@ -52,7 +48,7 @@ public class RouteFetcher {
         WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) environment.getSource();
         List<String> routeIds = environment.getArgument("route_id");
 
-        FeedSource feed = ApiMain.feedSources.get(fi.feedUniqueId);
+        FeedSource feed = ApiMain.getFeedSource(fi.feedUniqueId);
 
         if (routeIds != null) {
             return routeIds.stream()

@@ -34,7 +34,7 @@ public class RoutesController {
         if (req.queryParams("feed") != null) {
 
             for (String feedId : req.queryParams("feed").split(",")){
-                if (ApiMain.feedSources.get(feedId) != null) {
+                if (ApiMain.getFeedSource(feedId) != null) {
                     feeds.add(feedId);
                 }
             }
@@ -44,7 +44,7 @@ public class RoutesController {
             // If feed is only param.
             else if (req.queryParams().size() == 1 && req.params("id") == null) {
                 for (String feedId : req.queryParams("feed").split(",")){
-                    FeedSource feedSource = ApiMain.feedSources.get(feedId);
+                    FeedSource feedSource = ApiMain.getFeedSource(feedId);
                     if (feedSource != null)
                         routes.addAll(feedSource.feed.routes.values());
                 }
@@ -59,7 +59,7 @@ public class RoutesController {
 
         // get specific route
         if (req.params("id") != null) {
-            Route r = ApiMain.feedSources.get(feeds.get(0)).feed.routes.get(req.params("id"));
+            Route r = ApiMain.getFeedSource(feeds.get(0)).feed.routes.get(req.params("id"));
             if(r != null) // && currentUser(req).hasReadPermission(s.projectId))
                 return r;
             else
@@ -71,7 +71,7 @@ public class RoutesController {
             Coordinate minCoordinate = new Coordinate(Double.valueOf(req.queryParams("min_lon")), Double.valueOf(req.queryParams("min_lat")));
             Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
             for (String feedId : feeds) {
-                List<Route> searchResults = ApiMain.feedSources.get(feedId).routeIndex.query(searchEnvelope);
+                List<Route> searchResults = ApiMain.getFeedSource(feedId).routeIndex.query(searchEnvelope);
                 routes.addAll(searchResults);
             }
             return routes;
@@ -85,7 +85,7 @@ public class RoutesController {
             Envelope searchEnvelope = GeomUtil.getBoundingBox(latLon, radius);
 
             for (String feedId : feeds) {
-                List<Route> searchResults = ApiMain.feedSources.get(feedId).routeIndex.query(searchEnvelope);
+                List<Route> searchResults = ApiMain.getFeedSource(feedId).routeIndex.query(searchEnvelope);
                 routes.addAll(searchResults);
             }
             return routes;
@@ -102,7 +102,7 @@ public class RoutesController {
                 System.out.println("checking feed: " + feedId);
 
                 // search query must be in upper case to match radix tree keys
-                Iterable<Route> searchResults = ApiMain.feedSources.get(feedId).routeTree.getValuesForKeysContaining(req.queryParams("name").toUpperCase());
+                Iterable<Route> searchResults = ApiMain.getFeedSource(feedId).routeTree.getValuesForKeysContaining(req.queryParams("name").toUpperCase());
                 for (Route route : searchResults) {
                     routes.add(route);
                 }
@@ -126,7 +126,7 @@ public class RoutesController {
             // loop through feeds
             for (String feedId : feeds) {
                 // loop through patterns, check for route and return pattern stops
-                FeedSource source = ApiMain.feedSources.get(feedId);
+                FeedSource source = ApiMain.getFeedSource(feedId);
                 for (Pattern pattern : source.feed.patterns.values()) {
                     if (pattern.orderedStops.contains(stopId)){
                         pattern.associatedRoutes.stream()

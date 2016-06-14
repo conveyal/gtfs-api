@@ -61,7 +61,7 @@ public class Routes {
 //        get(prefix + "/trips", (request, response) -> mapper.writeValueAsString(ApiMain.feed.trips));
         get(prefix + "/trips", TripsController::getTrips, json);
         get(prefix + "/trips/:id", TripsController::getTrips, json);
-//                mapper.writeValueAsString(ApiMain.feedSources.get().trips.get(request.params("id")))
+//                mapper.writeValueAsString(ApiMain.getFeedSource().trips.get(request.params("id")))
 //        );
         get(prefix + "/trips/:id/stoptimes", StopTimesController::getStopTimes, json);
 

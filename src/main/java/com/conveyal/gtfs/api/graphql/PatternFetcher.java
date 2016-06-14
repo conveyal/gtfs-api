@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class PatternFetcher {
     public static List<WrappedGTFSEntity<Pattern>> fromRoute(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) env.getSource();
-        FeedSource feed = ApiMain.feedSources.get(route.feedUniqueId);
+        FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
 
         Set<Pattern> patternSet = feed.feed.trips.values().stream()
                 .filter(t -> t.route_id.equals(route.entity.route_id))
@@ -32,7 +32,7 @@ public class PatternFetcher {
 
     public static WrappedGTFSEntity<Pattern> fromTrip(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource feed = ApiMain.feedSources.get(trip.feedUniqueId);
+        FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);
         Pattern patt = feed.feed.patterns.get(feed.feed.tripPatternMap.get(trip.entity.trip_id));
         return new WrappedGTFSEntity<>(feed.id, patt);
     }

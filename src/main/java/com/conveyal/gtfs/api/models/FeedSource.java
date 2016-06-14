@@ -35,20 +35,11 @@ public class FeedSource {
      */
     public String id;
 
-    public FeedSource(String path){
-        this(GTFSFeed.fromFile(path));
-    }
-
-    public FeedSource(String path, String feedId){
-        this(GTFSFeed.fromFile(path, feedId));
-    }
-
     public FeedSource (GTFSFeed feed) {
         this.feed = feed;
         // TODO this is hack to keep GTFS API working as it was before. We need actually to have unique IDs for feeds
         // independent of GTFS Feed ID as we track multiple versions of feeds.
         this.id = feed.feedId;
-        feed.findPatterns();
         initIndexes();
     }
 

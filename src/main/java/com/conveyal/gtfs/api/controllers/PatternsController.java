@@ -4,6 +4,7 @@ import com.conveyal.geojson.GeometryDeserializer;
 import com.conveyal.geojson.GeometrySerializer;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.ApiMain;
+import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Trip;
@@ -29,7 +30,7 @@ public class PatternsController {
 
         if (req.queryParams("feed") != null) {
             for (String feedId : req.queryParams("feed").split(",")){
-                if (ApiMain.feedSources.get(feedId) != null) {
+                if (ApiMain.getFeedSource(feedId) != null) {
                     feeds.add(feedId);
                 }
             }
@@ -44,11 +45,9 @@ public class PatternsController {
         // grab the route
         if (req.queryParams("route") == null) halt(400, "Must specify route");
 
-        if (!ApiMain.feedSources.containsKey(feeds.get(0))) {
-            halt(404, "No such feed");
-        }
-
-        GTFSFeed feed = ApiMain.feedSources.get(feeds.get(0)).feed;
+        FeedSource source = ApiMain.getFeedSource(feeds.get(0));
+        if (source == null) halt(404, "No such feed");
+        GTFSFeed feed = source.feed;
 
         String routeId = req.queryParams("route");
         if (!feed.routes.containsKey(routeId)) halt(404, "No such route");

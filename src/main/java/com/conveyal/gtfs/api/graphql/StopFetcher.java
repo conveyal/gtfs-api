@@ -26,12 +26,8 @@ public class StopFetcher {
 
         Collection<FeedSource> feeds;
 
-        if (args.get("feed_id") != null) {
-            List<String> feedId = (List<String>) args.get("feed_id");
-            feeds = feedId.stream().map(ApiMain.feedSources::get).collect(Collectors.toList());
-        } else {
-            feeds = ApiMain.feedSources.values();
-        }
+        List<String> feedId = (List<String>) args.get("feed_id");
+        feeds = feedId.stream().map(ApiMain::getFeedSource).collect(Collectors.toList());
 
         List<WrappedGTFSEntity<Stop>> stops = new ArrayList<>();
 
@@ -62,7 +58,7 @@ public class StopFetcher {
             return Collections.emptyList();
         }
 
-        FeedSource source = ApiMain.feedSources.get(pattern.feedUniqueId);
+        FeedSource source = ApiMain.getFeedSource(pattern.feedUniqueId);
 
         return source.feed.getOrderedStopListForTrip(pattern.entity.associatedTrips.get(0))
                 .stream()
@@ -73,7 +69,7 @@ public class StopFetcher {
 
     public static List<WrappedGTFSEntity<Stop>> fromFeed(DataFetchingEnvironment environment) {
         WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) environment.getSource();
-        FeedSource source = ApiMain.feedSources.get(fi.feedUniqueId);
+        FeedSource source = ApiMain.getFeedSource(fi.feedUniqueId);
         return source.feed.stops.values().stream()
                 .map(s -> new WrappedGTFSEntity<>(source.id, s))
                 .collect(Collectors.toList());

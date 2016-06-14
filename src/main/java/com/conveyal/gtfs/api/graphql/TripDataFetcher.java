@@ -20,7 +20,7 @@ import java.util.stream.StreamSupport;
 public class TripDataFetcher {
     public static List<WrappedGTFSEntity<Trip>> fromRoute(DataFetchingEnvironment dataFetchingEnvironment) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
-        FeedSource feed = ApiMain.feedSources.get(route.feedUniqueId);
+        FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
 
         return feed.feed.trips.values().stream()
                 .filter(t -> t.route_id.equals(route.entity.route_id))
@@ -31,7 +31,7 @@ public class TripDataFetcher {
     public static List<WrappedGTFSEntity<Trip>> fromPattern (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
 
-        FeedSource feed = ApiMain.feedSources.get(pattern.feedUniqueId);
+        FeedSource feed = ApiMain.getFeedSource(pattern.feedUniqueId);
         return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get)
                 .map(t -> new WrappedGTFSEntity<>(feed.id, t))
                 .collect(Collectors.toList());
@@ -39,7 +39,7 @@ public class TripDataFetcher {
 
     public static Integer getStartTime(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource feed = ApiMain.feedSources.get(trip.feedUniqueId);
+        FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);
 
         for (StopTime st : feed.feed.getOrderedStopTimesForTrip(trip.entity.trip_id)) {
             return st.arrival_time;
@@ -50,7 +50,7 @@ public class TripDataFetcher {
 
     public static Integer getDuration(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource feed = ApiMain.feedSources.get(trip.feedUniqueId);
+        FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);
 
         int firstArrival = StopTime.INT_MISSING;
         int lastDeparture = StopTime.INT_MISSING;

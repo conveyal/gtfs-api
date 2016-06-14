@@ -18,7 +18,7 @@ import java.util.stream.StreamSupport;
 public class StopTimeFetcher {
     public static List<WrappedGTFSEntity<StopTime>> fromTrip(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource feed = ApiMain.feedSources.get(trip.feedUniqueId);
+        FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);
 
         // TODO stoptimes stay in correct order, right?
         return StreamSupport.stream(feed.feed.getOrderedStopTimesForTrip(trip.entity.trip_id).spliterator(), false)
