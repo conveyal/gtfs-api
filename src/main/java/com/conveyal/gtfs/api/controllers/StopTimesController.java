@@ -22,7 +22,7 @@ public class StopTimesController {
             halt(400, "Please specify a feed and trip");
         }
 
-        FeedSource feed = ApiMain.feedSources.get(req.queryParams("feed"));
+        FeedSource feed = ApiMain.getFeedSource(req.queryParams("feed"));
 
         if (feed == null) halt(404, "Feed not found");
 

@@ -29,17 +29,17 @@ public class FeedSource {
     public SuffixTree<Route> routeTree;
     public GTFSFeed feed;
 
-    public FeedSource(String path){
-        this(GTFSFeed.fromFile(path));
-    }
-
-    public FeedSource(String path, String feedId){
-        this(GTFSFeed.fromFile(path, feedId));
-    }
+    /**
+     * a unique ID for this feed source. Not a GTFS feed ID as they are not unique between versions of
+     * the same feed.
+     */
+    public String id;
 
     public FeedSource (GTFSFeed feed) {
         this.feed = feed;
-        feed.findPatterns();
+        // TODO this is hack to keep GTFS API working as it was before. We need actually to have unique IDs for feeds
+        // independent of GTFS Feed ID as we track multiple versions of feeds.
+        this.id = feed.feedId;
         initIndexes();
     }
 
@@ -51,7 +51,7 @@ public class FeedSource {
         // spatial
         Set<Route> indexedRoutes = new HashSet<>();
         for (Pattern pattern : this.feed.patterns.values()){
-            Route currentRoute = this.feed.trips.get(pattern.associatedTrips.get(0)).route;
+            Route currentRoute = this.feed.routes.get(this.feed.trips.get(pattern.associatedTrips.get(0)).route_id);
 //          TODO: check if list of routes already contains current route
             if (!indexedRoutes.contains(currentRoute)){
                 //            System.out.println(this.feed.trips.get(pattern.associatedTrips.get(0)).trip_headsign);
