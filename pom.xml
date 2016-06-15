@@ -6,7 +6,7 @@
 
     <groupId>com.conveyal</groupId>
     <artifactId>gtfs-api</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
 
     <!-- Define where the source code for this project lives -->
     <scm>
@@ -126,7 +126,7 @@
         <dependency>
             <groupId>com.conveyal</groupId>
             <artifactId>gtfs-lib</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <version>0.2.1</version>
         </dependency>
 
         <!-- the core, which includes Streaming API, shared low-level abstractions (but NOT data-binding) -->
