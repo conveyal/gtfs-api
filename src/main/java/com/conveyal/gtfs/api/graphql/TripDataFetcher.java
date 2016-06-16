@@ -9,8 +9,10 @@ import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import graphql.execution.ExecutionContext;
 import graphql.schema.DataFetchingEnvironment;
+import org.mapdb.Fun;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -41,25 +43,18 @@ public class TripDataFetcher {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
         FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);
 
-        for (StopTime st : feed.feed.getOrderedStopTimesForTrip(trip.entity.trip_id)) {
-            return st.arrival_time;
-        }
-
-        return null;
+        Map.Entry<Fun.Tuple2, StopTime> st = feed.feed.stop_times.ceilingEntry(new Fun.Tuple2(trip.entity.trip_id, null));
+        return st != null ? st.getValue().departure_time : null;
     }
 
     public static Integer getDuration(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
         FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);
 
-        int firstArrival = StopTime.INT_MISSING;
-        int lastDeparture = StopTime.INT_MISSING;
+        Integer startTime = getStartTime(env);
+        Map.Entry<Fun.Tuple2, StopTime> endStopTime = feed.feed.stop_times.floorEntry(new Fun.Tuple2(trip.entity.trip_id, Fun.HI));
 
-        for (StopTime st : feed.feed.getOrderedStopTimesForTrip(trip.entity.trip_id)) {
-            if (firstArrival == StopTime.INT_MISSING) firstArrival = st.arrival_time;
-            lastDeparture = st.departure_time;
-        }
-
-        return firstArrival != StopTime.INT_MISSING ? lastDeparture - firstArrival : null;
+        if (startTime == null || endStopTime == null || endStopTime.getValue().arrival_time < startTime) return null;
+        else return endStopTime.getValue().arrival_time - startTime;
     }
 }
