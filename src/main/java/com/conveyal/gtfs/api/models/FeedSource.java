@@ -12,6 +12,8 @@ import com.googlecode.concurrenttrees.suffix.SuffixTree;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.index.strtree.STRtree;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,6 +24,7 @@ import java.util.Set;
  * Created by landon on 2/8/16.
  */
 public class FeedSource {
+    private static final Logger LOG = LoggerFactory.getLogger(FeedSource.class);
 
     public STRtree routeIndex;
     public STRtree stopIndex;
@@ -51,6 +54,12 @@ public class FeedSource {
         // spatial
         Set<Route> indexedRoutes = new HashSet<>();
         for (Pattern pattern : this.feed.patterns.values()){
+            if (pattern.geometry == null) {
+                LOG.warn("Pattern {} in feed {} has no geometry. It will not be included in indices. It has {} stops, if this is less than 2 this message is expected.",
+                        pattern.pattern_id, feed.feedId, pattern.orderedStops.size());
+                continue;
+            }
+
             Route currentRoute = this.feed.routes.get(this.feed.trips.get(pattern.associatedTrips.get(0)).route_id);
 //          TODO: check if list of routes already contains current route
             if (!indexedRoutes.contains(currentRoute)){
