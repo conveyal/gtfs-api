@@ -61,6 +61,7 @@ public class ApiMain {
         Routes.routes("api");
     }
 
+    /** Set up the GTFS API. If bundleBucket is null, S3 will not be used */
     public static void initialize (String feedBucket, String dataDirectory) {
         ApiMain.feedBucket = feedBucket;
         ApiMain.dataDirectory = dataDirectory;
