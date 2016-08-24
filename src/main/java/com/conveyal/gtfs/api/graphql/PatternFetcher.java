@@ -19,13 +19,8 @@ public class PatternFetcher {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) env.getSource();
         FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
 
-        Set<Pattern> patternSet = feed.feed.trips.values().stream()
-                .filter(t -> t.route_id.equals(route.entity.route_id))
-                .map(t -> feed.feed.patterns.get(feed.feed.tripPatternMap.get(t.trip_id)))
-                // use set so patterns are unique
-                .collect(Collectors.toCollection(HashSet::new));
-
-        return patternSet.stream()
+        return feed.feed.patterns.values().stream()
+                .filter(p -> p.associatedRoutes.contains(route.entity.route_id))
                 .map(p -> new WrappedGTFSEntity<>(feed.id, p))
                 .collect(Collectors.toList());
     }
