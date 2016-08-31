@@ -150,8 +150,8 @@ public class GraphQLGtfsSchema {
             )
             .build();
 
-    public static GraphQLObjectType routeQuery = newObject()
-            .name("routeQuery")
+    public static GraphQLObjectType rootQuery = newObject()
+            .name("rootQuery")
             .field(newFieldDefinition()
                     .name("routes")
                     .type(new GraphQLList(routeType))
@@ -179,7 +179,7 @@ public class GraphQLGtfsSchema {
 
 
 
-    public static GraphQLSchema schema = GraphQLSchema.newSchema().query(routeQuery).build();
+    public static GraphQLSchema schema = GraphQLSchema.newSchema().query(rootQuery).build();
 
     public static GraphQLFieldDefinition string (String name) {
         return newFieldDefinition()
