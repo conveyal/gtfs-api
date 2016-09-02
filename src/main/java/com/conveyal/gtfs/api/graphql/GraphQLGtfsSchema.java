@@ -1,16 +1,6 @@
 package com.conveyal.gtfs.api.graphql;
 
-import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.api.ApiMain;
-import com.conveyal.gtfs.api.models.FeedSource;
-import com.conveyal.gtfs.model.Route;
 import graphql.schema.*;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static graphql.schema.GraphQLArgument.newArgument;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
@@ -90,6 +80,12 @@ public class GraphQLGtfsSchema {
                     .build()
             )
             .field(newFieldDefinition()
+                    .type(GraphQLLong)
+                    .name("stop_count")
+                    .dataFetcher(StopFetcher::fromPatternCount)
+                    .build()
+            )
+            .field(newFieldDefinition()
                     .type(lineStringType)
                     .dataFetcher(new WrappedEntityFieldFetcher("geometry"))
                     .name("geometry")
@@ -99,6 +95,12 @@ public class GraphQLGtfsSchema {
                     .name("trips")
                     .type(new GraphQLList(tripType))
                     .dataFetcher(TripDataFetcher::fromPattern)
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .type(GraphQLLong)
+                    .name("trip_count")
+                    .dataFetcher(TripDataFetcher::fromPatternCount)
                     .build()
             )
             .build();
@@ -121,9 +123,21 @@ public class GraphQLGtfsSchema {
                     .build()
             )
             .field(newFieldDefinition()
+                    .type(GraphQLLong)
+                    .name("trip_count")
+                    .dataFetcher(TripDataFetcher::fromRouteCount)
+                    .build()
+            )
+            .field(newFieldDefinition()
                     .type(new GraphQLList(patternType))
                     .name("patterns")
                     .dataFetcher(PatternFetcher::fromRoute)
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .type(GraphQLLong)
+                    .name("pattern_count")
+                    .dataFetcher(PatternFetcher::fromRouteCount)
                     .build()
             )
             .build();
@@ -139,15 +153,32 @@ public class GraphQLGtfsSchema {
                     .name("routes")
                     .type(new GraphQLList(routeType))
                     .argument(multiStringArg("route_id"))
-                    .dataFetcher(RouteFetcher::forFeed)
+                    .dataFetcher(RouteFetcher::fromFeed)
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .type(GraphQLLong)
+                    .name("route_count")
+                    .dataFetcher(RouteFetcher::fromFeedCount)
                     .build()
             )
             .field(newFieldDefinition()
                     .name("stops")
                     .type(new GraphQLList(stopType))
+                    .argument(floatArg("min_lat"))
+                    .argument(floatArg("min_lon"))
+                    .argument(floatArg("max_lat"))
+                    .argument(floatArg("max_lon"))
                     .dataFetcher(StopFetcher::fromFeed)
                     .build()
             )
+            .field(newFieldDefinition()
+                    .type(GraphQLLong)
+                    .name("stop_count")
+                    .dataFetcher(StopFetcher::fromFeedCount)
+                    .build()
+            )
+
             .build();
 
     public static GraphQLObjectType rootQuery = newObject()
@@ -216,6 +247,13 @@ public class GraphQLGtfsSchema {
         return newArgument()
                 .name(name)
                 .type(new GraphQLList(GraphQLString))
+                .build();
+    }
+
+    public static GraphQLArgument floatArg (String name) {
+        return newArgument()
+                .name(name)
+                .type(GraphQLFloat)
                 .build();
     }
 }

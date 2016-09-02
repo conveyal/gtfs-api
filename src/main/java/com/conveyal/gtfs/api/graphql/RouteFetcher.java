@@ -44,7 +44,7 @@ public class RouteFetcher {
         return routes;
     }
 
-    public static List<WrappedGTFSEntity<Route>> forFeed(DataFetchingEnvironment environment) {
+    public static List<WrappedGTFSEntity<Route>> fromFeed(DataFetchingEnvironment environment) {
         WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) environment.getSource();
         List<String> routeIds = environment.getArgument("route_id");
 
@@ -62,5 +62,12 @@ public class RouteFetcher {
                     .map(r -> new WrappedGTFSEntity<>(feed.id, r))
                     .collect(Collectors.toList());
         }
+    }
+
+    public static Long fromFeedCount(DataFetchingEnvironment environment) {
+        WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) environment.getSource();
+
+        FeedSource feed = ApiMain.getFeedSource(fi.feedUniqueId);
+        return feed.feed.routes.values().stream().count();
     }
 }

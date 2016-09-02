@@ -25,6 +25,15 @@ public class PatternFetcher {
                 .collect(Collectors.toList());
     }
 
+    public static long fromRouteCount(DataFetchingEnvironment env) {
+        WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) env.getSource();
+        FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
+
+        return feed.feed.patterns.values().stream()
+                .filter(p -> p.associatedRoutes.contains(route.entity.route_id))
+                .count();
+    }
+
     public static WrappedGTFSEntity<Pattern> fromTrip(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
         FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);

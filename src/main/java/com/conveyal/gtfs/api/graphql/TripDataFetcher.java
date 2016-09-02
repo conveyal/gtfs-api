@@ -30,6 +30,13 @@ public class TripDataFetcher {
                 .collect(Collectors.toList());
     }
 
+    public static Long fromRouteCount(DataFetchingEnvironment dataFetchingEnvironment) {
+        WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
+        FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
+
+        return feed.feed.trips.values().stream().count();
+    }
+
     public static List<WrappedGTFSEntity<Trip>> fromPattern (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
 
@@ -37,6 +44,13 @@ public class TripDataFetcher {
         return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get)
                 .map(t -> new WrappedGTFSEntity<>(feed.id, t))
                 .collect(Collectors.toList());
+    }
+
+    public static Long fromPatternCount (DataFetchingEnvironment env) {
+        WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
+
+        FeedSource feed = ApiMain.getFeedSource(pattern.feedUniqueId);
+        return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get).count();
     }
 
     public static Integer getStartTime(DataFetchingEnvironment env) {
