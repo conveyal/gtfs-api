@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.model.*;
 import com.conveyal.gtfs.GTFSCache;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.models.FeedSource;
+import com.conveyal.gtfs.api.util.CorsFilter;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -58,6 +59,7 @@ public class ApiMain {
         config.load(in);
         initialize(config.getProperty("s3.feeds-bucket"), config.getProperty("application.data"));
 
+        CorsFilter.apply();
         Routes.routes("api");
     }
 
