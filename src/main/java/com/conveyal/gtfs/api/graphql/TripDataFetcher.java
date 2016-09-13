@@ -34,7 +34,9 @@ public class TripDataFetcher {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
         FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
 
-        return feed.feed.trips.values().stream().count();
+        return feed.feed.trips.values().stream()
+                .filter(t -> t.route_id.equals(route.entity.route_id))
+                .count();
     }
 
     public static List<WrappedGTFSEntity<Trip>> fromPattern (DataFetchingEnvironment env) {
