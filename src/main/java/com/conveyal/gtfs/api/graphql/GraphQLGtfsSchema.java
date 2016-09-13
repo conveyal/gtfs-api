@@ -1,7 +1,6 @@
 package com.conveyal.gtfs.api.graphql;
 
 import graphql.schema.*;
-
 import static graphql.schema.GraphQLArgument.newArgument;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
@@ -40,6 +39,7 @@ public class GraphQLGtfsSchema {
             .field(string("trip_headsign"))
             .field(string("trip_short_name"))
             .field(string("block_id"))
+            .field(intt("direction_id"))
             .field(newFieldDefinition()
                     .name("pattern")
                     .type(new GraphQLTypeReference("pattern"))
