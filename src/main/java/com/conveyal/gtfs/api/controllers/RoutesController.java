@@ -129,9 +129,7 @@ public class RoutesController {
                 FeedSource source = ApiMain.getFeedSource(feedId);
                 for (Pattern pattern : source.feed.patterns.values()) {
                     if (pattern.orderedStops.contains(stopId)){
-                        pattern.associatedRoutes.stream()
-                                .map(source.feed.routes::get)
-                                .forEach(routes::add);
+                        routes.add(source.feed.routes.get(pattern.route_id));
                     }
                 }
             }

@@ -136,11 +136,9 @@ public class StopsController {
 
                 // loop through patterns, check for route and return pattern stops
                 for (Pattern pattern : source.feed.patterns.values()) {
-                    for (String routeIdInPattern : pattern.associatedRoutes){
-                        if (routeId.equals(routeIdInPattern)){
-                            stopIds.addAll(pattern.orderedStops);
-                            break;
-                        }
+                    if (routeId.equals(pattern.route_id)) {
+                        stopIds.addAll(pattern.orderedStops);
+                        break;
                     }
                 }
 

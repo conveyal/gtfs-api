@@ -20,7 +20,7 @@ public class PatternFetcher {
         FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
 
         return feed.feed.patterns.values().stream()
-                .filter(p -> p.associatedRoutes.contains(route.entity.route_id))
+                .filter(p -> p.route_id.equals(route.entity.route_id))
                 .map(p -> new WrappedGTFSEntity<>(feed.id, p))
                 .collect(Collectors.toList());
     }
@@ -30,7 +30,7 @@ public class PatternFetcher {
         FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
 
         return feed.feed.patterns.values().stream()
-                .filter(p -> p.associatedRoutes.contains(route.entity.route_id))
+                .filter(p -> p.route_id.equals(route.entity.route_id))
                 .count();
     }
 
