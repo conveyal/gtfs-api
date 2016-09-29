@@ -3,9 +3,9 @@ package com.conveyal.gtfs.api.graphql;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.models.FeedSource;
+import com.conveyal.gtfs.api.util.GeomUtil;
 import com.conveyal.gtfs.model.FeedInfo;
 import com.conveyal.gtfs.model.Pattern;
-import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -13,7 +13,11 @@ import graphql.schema.DataFetchingEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +25,7 @@ import java.util.stream.Collectors;
  */
 public class StopFetcher {
     private static final Logger LOG = LoggerFactory.getLogger(StopFetcher.class);
+    private static final Double DEFAULT_RADIUS = 1.0; // default 1 km search radius
 
     /** top level stops query (i.e. not inside a stoptime etc) */
     public static List<WrappedGTFSEntity<Stop>> apex(DataFetchingEnvironment env) {
@@ -43,9 +48,36 @@ public class StopFetcher {
                         .forEach(stops::add);
             }
             else {
-                feed.feed.stops.values().stream()
-                        .map(s -> new WrappedGTFSEntity(feed.id, s))
-                        .forEach(stops::add);
+                // get stops by lat/lon/radius
+                if (args.get("lat") != null && args.get("lon") != null) {
+                    Double lat = (Double) args.get("lat");
+                    Double lon = (Double) args.get("lon");
+                    Double radius = args.get("radius") == null ? DEFAULT_RADIUS : (Double) args.get("radius");
+                    Coordinate latLng = new Coordinate(lon, lat);
+                    Envelope searchEnvelope = GeomUtil.getBoundingBox(latLng, radius);
+
+                    List<Stop> results = feed.stopIndex.query(searchEnvelope);
+                    results.stream()
+                            .map(s -> new WrappedGTFSEntity(feed.id, s))
+                            .forEach(stops::add);
+                }
+                // get stops by bounding box
+                else if (args.get("max_lat") != null && args.get("max_lon") != null && args.get("min_lat") != null && args.get("min_lon") != null) {
+                    Coordinate maxCoordinate = new Coordinate((Double) args.get("max_lon"), (Double) args.get("max_lat"));
+                    Coordinate minCoordinate = new Coordinate((Double) args.get("min_lon"), (Double) args.get("min_lat"));
+                    Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
+
+                    List<Stop> results = feed.stopIndex.query(searchEnvelope);
+                    results.stream()
+                            .map(s -> new WrappedGTFSEntity(feed.id, s))
+                            .forEach(stops::add);
+                }
+                // get all
+                else {
+                    feed.feed.stops.values().stream()
+                            .map(s -> new WrappedGTFSEntity(feed.id, s))
+                            .forEach(stops::add);
+                }
             }
         }
 
