@@ -21,6 +21,13 @@ public class GraphQLGtfsSchema {
             .field(string("zone_id"))
             .field(string("stop_url"))
             .field(string("stop_timezone"))
+            .field(newFieldDefinition()
+                    .name("routes")
+                    .type(new GraphQLList(new GraphQLTypeReference("route")))
+                    .argument(multiStringArg("route_id"))
+                    .dataFetcher(RouteFetcher::fromStop)
+                    .build()
+            )
             .build();
 
     public static GraphQLObjectType stopTimeType = newObject()
@@ -49,6 +56,7 @@ public class GraphQLGtfsSchema {
             .field(newFieldDefinition()
                     .name("stop_times")
                     .type(new GraphQLList(stopTimeType))
+                    .argument(multiStringArg("stop_id"))
                     .dataFetcher(StopTimeFetcher::fromTrip)
                     .build()
             )
@@ -95,6 +103,8 @@ public class GraphQLGtfsSchema {
                     .name("trips")
                     .type(new GraphQLList(tripType))
                     .dataFetcher(TripDataFetcher::fromPattern)
+                    .argument(longArg("begin_time"))
+                    .argument(longArg("end_time"))
                     .build()
             )
             .field(newFieldDefinition()
@@ -131,6 +141,7 @@ public class GraphQLGtfsSchema {
             .field(newFieldDefinition()
                     .type(new GraphQLList(patternType))
                     .name("patterns")
+                    .argument(multiStringArg("stop_id"))
                     .dataFetcher(PatternFetcher::fromRoute)
                     .build()
             )
@@ -261,6 +272,13 @@ public class GraphQLGtfsSchema {
         return newArgument()
                 .name(name)
                 .type(GraphQLFloat)
+                .build();
+    }
+
+    public static GraphQLArgument longArg (String name) {
+        return newArgument()
+                .name(name)
+                .type(GraphQLLong)
                 .build();
     }
 }

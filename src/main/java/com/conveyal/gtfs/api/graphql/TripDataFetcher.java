@@ -3,18 +3,30 @@ package com.conveyal.gtfs.api.graphql;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.models.FeedSource;
+import com.conveyal.gtfs.model.Agency;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
+import com.conveyal.gtfs.model.Service;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import graphql.execution.ExecutionContext;
 import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.GraphQLType;
 import org.mapdb.Fun;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import java.time.temporal.ChronoUnit.*;
+
+import static spark.Spark.halt;
 
 /**
  * Fetch trip data given a route.
@@ -42,10 +54,46 @@ public class TripDataFetcher {
     public static List<WrappedGTFSEntity<Trip>> fromPattern (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
 
+        Long beginTime = env.getArgument("begin_time");
+        Long endTime = env.getArgument("end_time");
+
         FeedSource feed = ApiMain.getFeedSource(pattern.feedUniqueId);
-        return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get)
-                .map(t -> new WrappedGTFSEntity<>(feed.id, t))
-                .collect(Collectors.toList());
+
+        if (beginTime != null && endTime != null) {
+            String agencyId = feed.feed.routes.get(pattern.entity.route_id).agency_id;
+            Agency agency = agencyId != null ? feed.feed.agency.get(agencyId) : null;
+            if (beginTime >= endTime) {
+                halt(404, "end_time must be greater than begin_time.");
+            }
+            LocalDateTime beginDateTime = LocalDateTime.ofEpochSecond(beginTime, 0, ZoneOffset.UTC);
+            int beginSeconds = beginDateTime.getSecond();
+            LocalDateTime endDateTime = LocalDateTime.ofEpochSecond(endTime, 0, ZoneOffset.UTC);
+            int endSeconds = endDateTime.getSecond();
+            long days = ChronoUnit.DAYS.between(beginDateTime, endDateTime);
+            ZoneId zone =  agency != null ? ZoneId.of(agency.agency_timezone) : ZoneId.systemDefault();
+            Set<String> services = feed.feed.services.values().stream()
+//                    .filter(s -> s.activeOn(LocalDate.now(zone)))
+                    .filter(s -> {
+                        for (int i = 0; i < days; i++) {
+                            LocalDate date = beginDateTime.toLocalDate().plusDays(i);
+                            if (s.activeOn(date)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    })
+                    .map(s -> s.service_id)
+                    .collect(Collectors.toSet());
+            return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get)
+                    .filter(t -> services.contains(t.service_id))
+                    .map(t -> new WrappedGTFSEntity<>(feed.id, t))
+                    .collect(Collectors.toList());
+        }
+        else {
+            return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get)
+                    .map(t -> new WrappedGTFSEntity<>(feed.id, t))
+                    .collect(Collectors.toList());
+        }
     }
 
     public static Long fromPatternCount (DataFetchingEnvironment env) {

@@ -5,6 +5,7 @@ import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.model.FeedInfo;
 import com.conveyal.gtfs.model.Route;
+import com.conveyal.gtfs.model.Stop;
 import graphql.schema.DataFetchingEnvironment;
 
 import java.util.ArrayList;
@@ -42,6 +43,27 @@ public class RouteFetcher {
         }
 
         return routes;
+    }
+
+    public static List<WrappedGTFSEntity<Route>> fromStop(DataFetchingEnvironment environment) {
+        WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) environment.getSource();
+        List<String> routeIds = environment.getArgument("route_id");
+
+        FeedSource feed = ApiMain.getFeedSource(stop.feedUniqueId);
+        List<WrappedGTFSEntity<Route>> routes = feed.feed.patterns.values().stream()
+                .filter(p -> p.orderedStops.contains(stop.entity.stop_id))
+                .map(p -> feed.feed.routes.get(p.route_id))
+                .map(r -> new WrappedGTFSEntity<>(feed.id, r))
+                .collect(Collectors.toList());
+
+        if (routeIds != null) {
+            return routes.stream()
+                    .filter(r -> routeIds.contains(r.entity.route_id))
+                    .collect(Collectors.toList());
+        }
+        else {
+            return routes;
+        }
     }
 
     public static List<WrappedGTFSEntity<Route>> fromFeed(DataFetchingEnvironment environment) {

@@ -19,10 +19,20 @@ public class StopTimeFetcher {
     public static List<WrappedGTFSEntity<StopTime>> fromTrip(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
         FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);
+        List<String> stopIds = env.getArgument("stop_id");
 
-        // TODO stoptimes stay in correct order, right?
-        return StreamSupport.stream(feed.feed.getOrderedStopTimesForTrip(trip.entity.trip_id).spliterator(), false)
-                .map(st -> new WrappedGTFSEntity<>(feed.id, st))
-                .collect(Collectors.toList());
+        Stream<StopTime> stopTimes = StreamSupport.stream(feed.feed.getOrderedStopTimesForTrip(trip.entity.trip_id).spliterator(), false);
+        if (stopIds != null) {
+            return stopTimes
+                    .filter(stopTime -> stopIds.contains(stopTime.stop_id))
+                    .map(st -> new WrappedGTFSEntity<>(feed.id, st))
+                    .collect(Collectors.toList());
+        }
+        else {
+            // TODO stoptimes stay in correct order, right?
+            return stopTimes
+                    .map(st -> new WrappedGTFSEntity<>(feed.id, st))
+                    .collect(Collectors.toList());
+        }
     }
 }
