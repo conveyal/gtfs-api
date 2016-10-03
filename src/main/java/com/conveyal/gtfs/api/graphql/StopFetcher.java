@@ -49,7 +49,7 @@ public class StopFetcher {
             }
             else {
                 // get stops by lat/lon/radius
-                if (args.get("lat") != null && args.get("lon") != null) {
+                if (argumentDefined(env, "lat") && argumentDefined(env, "lon")) {
                     Double lat = (Double) args.get("lat");
                     Double lon = (Double) args.get("lon");
                     Double radius = args.get("radius") == null ? DEFAULT_RADIUS : (Double) args.get("radius");
@@ -62,7 +62,8 @@ public class StopFetcher {
                             .forEach(stops::add);
                 }
                 // get stops by bounding box
-                else if (args.get("max_lat") != null && args.get("max_lon") != null && args.get("min_lat") != null && args.get("min_lon") != null) {
+                else if (argumentDefined(env, "min_lat") && argumentDefined(env, "max_lat") &&
+                        argumentDefined(env, "min_lon") && argumentDefined(env, "max_lon")) {
                     Coordinate maxCoordinate = new Coordinate((Double) args.get("max_lon"), (Double) args.get("max_lat"));
                     Coordinate minCoordinate = new Coordinate((Double) args.get("min_lon"), (Double) args.get("min_lat"));
                     Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);

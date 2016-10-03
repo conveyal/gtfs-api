@@ -79,7 +79,6 @@ public class TripDataFetcher {
             long days = ChronoUnit.DAYS.between(beginDateTime, endDateTime);
             ZoneId zone =  agency != null ? ZoneId.of(agency.agency_timezone) : ZoneId.systemDefault();
             Set<String> services = feed.feed.services.values().stream()
-//                    .filter(s -> s.activeOn(LocalDate.now(zone)))
                     .filter(s -> {
                         for (int i = 0; i < days; i++) {
                             LocalDate date = beginDateTime.toLocalDate().plusDays(i);
