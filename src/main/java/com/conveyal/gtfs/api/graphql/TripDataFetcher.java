@@ -51,13 +51,20 @@ public class TripDataFetcher {
                 .count();
     }
 
+    public static WrappedGTFSEntity<Trip> fromStopTime (DataFetchingEnvironment env) {
+        WrappedGTFSEntity<StopTime> stopTime = (WrappedGTFSEntity<StopTime>) env.getSource();
+        FeedSource feed = ApiMain.getFeedSource(stopTime.feedUniqueId);
+        Trip trip = feed.feed.trips.get(stopTime.entity.trip_id);
+
+        return new WrappedGTFSEntity<>(stopTime.feedUniqueId, trip);
+    }
+
     public static List<WrappedGTFSEntity<Trip>> fromPattern (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
+        FeedSource feed = ApiMain.getFeedSource(pattern.feedUniqueId);
 
         Long beginTime = env.getArgument("begin_time");
         Long endTime = env.getArgument("end_time");
-
-        FeedSource feed = ApiMain.getFeedSource(pattern.feedUniqueId);
 
         if (beginTime != null && endTime != null) {
             String agencyId = feed.feed.routes.get(pattern.entity.route_id).agency_id;
