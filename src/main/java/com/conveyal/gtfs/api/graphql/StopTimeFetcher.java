@@ -57,7 +57,7 @@ public class StopTimeFetcher {
                 .subSet(new Fun.Tuple2<>(stop.entity.stop_id, null), new Fun.Tuple2(stop.entity.stop_id, Fun.HI));
 
         List<WrappedGTFSEntity<StopTime>> stopTimes = index.stream()
-                 .map(t -> feed.feed.stop_times.get(t.b))
+                .map(t -> feed.feed.stop_times.get(t.b))
                 .filter(st -> st.departure_time > beginSeconds && st.departure_time < endSeconds)
                 .map(st -> new WrappedGTFSEntity<>(feed.id, st))
                 .collect(Collectors.toList());
