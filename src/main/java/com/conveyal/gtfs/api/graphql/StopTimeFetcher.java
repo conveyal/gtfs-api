@@ -12,6 +12,7 @@ import org.mapdb.Fun;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -52,10 +53,11 @@ public class StopTimeFetcher {
         LocalDateTime endDateTime = LocalDateTime.ofEpochSecond(endTime, 0, ZoneOffset.UTC);
         int endSeconds = endDateTime.getHour() * 3600 + endDateTime.getMinute() * 60 + endDateTime.getSecond();
 
-        List<WrappedGTFSEntity<StopTime>> stopTimes = feed.feed.stopStopTimeSet
-                .subSet(new Fun.Tuple2(stop.entity.stop_id, null), new Fun.Tuple2(stop.entity.stop_id, Fun.HI))
-                .stream()
-                .map(t -> feed.feed.stop_times.get(t.b))
+        SortedSet<Fun.Tuple2<String, Fun.Tuple2>> index = feed.feed.stopStopTimeSet
+                .subSet(new Fun.Tuple2<>(stop.entity.stop_id, null), new Fun.Tuple2(stop.entity.stop_id, Fun.HI));
+
+        List<WrappedGTFSEntity<StopTime>> stopTimes = index.stream()
+                 .map(t -> feed.feed.stop_times.get(t.b))
                 .filter(st -> st.departure_time > beginSeconds && st.departure_time < endSeconds)
                 .map(st -> new WrappedGTFSEntity<>(feed.id, st))
                 .collect(Collectors.toList());
