@@ -7,12 +7,15 @@ import com.conveyal.gtfs.api.util.GeomUtil;
 import com.conveyal.gtfs.model.FeedInfo;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Stop;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import graphql.schema.DataFetchingEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,6 +86,22 @@ public class StopFetcher {
         }
 
         return stops;
+    }
+
+    public static WrappedGTFSEntity<Object> getStats(DataFetchingEnvironment env) {
+        WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) env.getSource();
+        FeedSource fs = ApiMain.getFeedSource(stop.feedUniqueId);
+
+        long d = (long) env.getArgument("date");
+        long f = (long) env.getArgument("from");
+        long t = (long) env.getArgument("to");
+
+        LocalDate date = LocalDate.ofEpochDay(d);
+        LocalTime from = LocalTime.ofSecondOfDay(f);
+        LocalTime to = LocalTime.ofSecondOfDay(t);
+
+
+        return new WrappedGTFSEntity(stop.feedUniqueId, new Object()); // fs.stopStats.getAverageHeadwayForStop(stop.entity.stop_id, date, from, to);
     }
 
     public static List<WrappedGTFSEntity<Stop>> fromPattern(DataFetchingEnvironment environment) {

@@ -15,6 +15,34 @@ import java.util.stream.Collectors;
  * Created by matthewc on 3/9/16.
  */
 public class PatternFetcher {
+    public static List<WrappedGTFSEntity<Pattern>> apex(DataFetchingEnvironment env) {
+        Collection<FeedSource> feeds;
+
+        List<String> feedId = (List<String>) env.getArgument("feed_id");
+        feeds = feedId.stream().map(ApiMain::getFeedSource).collect(Collectors.toList());
+
+        List<WrappedGTFSEntity<Pattern>> patterns = new ArrayList<>();
+
+        for (FeedSource feed : feeds) {
+            if (env.getArgument("pattern_id") != null) {
+                List<String> patternId = (List<String>) env.getArgument("pattern_id");
+                patternId.stream()
+                        .filter(feed.feed.patterns::containsKey)
+                        .map(feed.feed.patterns::get)
+                        .map(pattern -> new WrappedGTFSEntity(feed.id, pattern))
+                        .forEach(patterns::add);
+            }
+            else if (env.getArgument("route_id") != null) {
+                List<String> routeId = (List<String>) env.getArgument("route_id");
+                feed.feed.patterns.values().stream()
+                        .filter(p -> routeId.contains(p.route_id))
+                        .map(pattern -> new WrappedGTFSEntity(feed.id, pattern))
+                        .forEach(patterns::add);
+            }
+        }
+
+        return patterns;
+    }
     public static List<WrappedGTFSEntity<Pattern>> fromRoute(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) env.getSource();
         FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);

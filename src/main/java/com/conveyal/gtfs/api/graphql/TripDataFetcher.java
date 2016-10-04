@@ -19,6 +19,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +34,34 @@ import static spark.Spark.halt;
  * Fetch trip data given a route.
  */
 public class TripDataFetcher {
+    public static List<WrappedGTFSEntity<Trip>> apex(DataFetchingEnvironment env) {
+        Collection<FeedSource> feeds;
+
+        List<String> feedId = (List<String>) env.getArgument("feed_id");
+        feeds = feedId.stream().map(ApiMain::getFeedSource).collect(Collectors.toList());
+
+        List<WrappedGTFSEntity<Trip>> trips = new ArrayList<>();
+
+        for (FeedSource feed : feeds) {
+            if (env.getArgument("trip_id") != null) {
+                List<String> tripId = (List<String>) env.getArgument("trip_id");
+                tripId.stream()
+                        .filter(feed.feed.trips::containsKey)
+                        .map(feed.feed.trips::get)
+                        .map(trip -> new WrappedGTFSEntity(feed.id, trip))
+                        .forEach(trips::add);
+            }
+            else if (env.getArgument("route_id") != null) {
+                List<String> routeId = (List<String>) env.getArgument("route_id");
+                feed.feed.trips.values().stream()
+                        .filter(t -> routeId.contains(t.route_id))
+                        .map(trip -> new WrappedGTFSEntity(feed.id, trip))
+                        .forEach(trips::add);
+            }
+        }
+
+        return trips;
+    }
     public static List<WrappedGTFSEntity<Trip>> fromRoute(DataFetchingEnvironment dataFetchingEnvironment) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
         FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);

@@ -2,6 +2,7 @@ package com.conveyal.gtfs.api.graphql;
 
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.models.FeedSource;
+import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
@@ -14,6 +15,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -25,6 +28,36 @@ import java.util.stream.StreamSupport;
  * Created by matthewc on 3/9/16.
  */
 public class StopTimeFetcher {
+    public static List<WrappedGTFSEntity<StopTime>> apex(DataFetchingEnvironment env) {
+        Collection<FeedSource> feeds;
+
+        List<String> feedId = (List<String>) env.getArgument("feed_id");
+        feeds = feedId.stream().map(ApiMain::getFeedSource).collect(Collectors.toList());
+
+        List<WrappedGTFSEntity<StopTime>> stopTimes = new ArrayList<>();
+
+        for (FeedSource feed : feeds) {
+            if (env.getArgument("stop_id") != null) {
+                List<String> stopId = (List<String>) env.getArgument("stop_id");
+
+                for (String id : stopId) {
+                    feed.feed.getStopTimesForStop(id).stream()
+                            .map(t -> feed.feed.stop_times.get(t.b))
+                            .map(st -> new WrappedGTFSEntity(feed.id, st))
+                            .forEach(stopTimes::add);
+                }
+            }
+            else if (env.getArgument("trip_id") != null) {
+                List<String> tripId = (List<String>) env.getArgument("trip_id");
+                tripId.stream()
+                        .map(id -> feed.feed.getOrderedStopTimesForTrip(id))
+                        .map(st -> new WrappedGTFSEntity(feed.id, st))
+                        .forEach(stopTimes::add);
+            }
+        }
+
+        return stopTimes;
+    }
     public static List<WrappedGTFSEntity<StopTime>> fromTrip(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
         FeedSource fs = ApiMain.getFeedSource(trip.feedUniqueId);
