@@ -16,9 +16,11 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -88,20 +90,29 @@ public class StopFetcher {
         return stops;
     }
 
-    public static WrappedGTFSEntity<Object> getStats(DataFetchingEnvironment env) {
+    public static Map getStats(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) env.getSource();
         FeedSource fs = ApiMain.getFeedSource(stop.feedUniqueId);
+        Map<String, Number> stats = new HashMap<>();
+        if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
+            String d = (String) env.getArgument("date");
+            long f = (long) env.getArgument("from");
+            long t = (long) env.getArgument("to");
 
-        long d = (long) env.getArgument("date");
-        long f = (long) env.getArgument("from");
-        long t = (long) env.getArgument("to");
+            LocalDate date = LocalDate.parse(d, DateTimeFormatter.ISO_LOCAL_DATE); // 2011-12-03
+            LocalTime from = LocalTime.ofSecondOfDay(f);
+            LocalTime to = LocalTime.ofSecondOfDay(t);
 
-        LocalDate date = LocalDate.ofEpochDay(d);
-        LocalTime from = LocalTime.ofSecondOfDay(f);
-        LocalTime to = LocalTime.ofSecondOfDay(t);
+            int headway = fs.stats.stop.getAverageHeadwayForStop(stop.entity.stop_id, date, from, to);
+            long tripCount = fs.stats.stop.getTripCountForDate(stop.entity.stop_id, date);
+            stats.put("headway", headway);
+            stats.put("tripCount", tripCount);
 
-
-        return new WrappedGTFSEntity(stop.feedUniqueId, new Object()); // fs.stopStats.getAverageHeadwayForStop(stop.entity.stop_id, date, from, to);
+            return stats;
+        }
+        else {
+            return null;
+        }
     }
 
     public static List<WrappedGTFSEntity<Stop>> fromPattern(DataFetchingEnvironment environment) {
