@@ -1,13 +1,13 @@
 package com.conveyal.gtfs.api.graphql.types;
 
 import com.conveyal.gtfs.api.graphql.PatternFetcher;
+import com.conveyal.gtfs.api.graphql.StatFetcher;
 import com.conveyal.gtfs.api.graphql.TripDataFetcher;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
 
-import static com.conveyal.gtfs.api.util.GraphQLUtil.multiStringArg;
-import static com.conveyal.gtfs.api.util.GraphQLUtil.string;
+import static com.conveyal.gtfs.api.util.GraphQLUtil.*;
 import static graphql.Scalars.GraphQLLong;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
@@ -17,6 +17,12 @@ import static graphql.schema.GraphQLObjectType.newObject;
  */
 public class RouteType {
     public static GraphQLObjectType build () {
+        // routeStats should be modeled after com.conveyal.gtfs.stats.model.RouteStatistic
+        GraphQLObjectType routeStats = newObject()
+                .name("stats")
+                .field(doublee("headway"))
+                .build();
+
         return newObject()
                 .name("route")
                 .field(string("route_id"))
@@ -51,6 +57,15 @@ public class RouteType {
                         .type(GraphQLLong)
                         .name("pattern_count")
                         .dataFetcher(PatternFetcher::fromRouteCount)
+                        .build()
+                )
+                .field(newFieldDefinition()
+                        .type(routeStats)
+                        .name("stats")
+                        .argument(stringArg("date"))
+                        .argument(longArg("from"))
+                        .argument(longArg("to"))
+                        .dataFetcher(StatFetcher::fromRoute)
                         .build()
                 )
                 .build();

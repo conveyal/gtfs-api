@@ -6,14 +6,11 @@ import com.conveyal.gtfs.api.graphql.types.RouteType;
 import com.conveyal.gtfs.api.graphql.types.StopTimeType;
 import com.conveyal.gtfs.api.graphql.types.StopType;
 import com.conveyal.gtfs.api.graphql.types.TripType;
-import com.conveyal.gtfs.model.StopTime;
 import graphql.schema.*;
 
 import static com.conveyal.gtfs.api.util.GraphQLUtil.*;
-import static graphql.schema.GraphQLArgument.newArgument;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
-import static graphql.Scalars.*;
 
 /**
  * Created by matthewc on 3/9/16.

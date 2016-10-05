@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.api.graphql.types;
 
 import com.conveyal.gtfs.api.graphql.RouteFetcher;
+import com.conveyal.gtfs.api.graphql.StatFetcher;
 import com.conveyal.gtfs.api.graphql.StopFetcher;
 import com.conveyal.gtfs.api.graphql.StopTimeFetcher;
 import graphql.schema.GraphQLList;
@@ -16,6 +17,32 @@ import static graphql.schema.GraphQLObjectType.newObject;
  */
 public class StopType {
     public static GraphQLObjectType build () {
+
+        // transferPerformance should be modeled after com.conveyal.gtfs.stats.model.TransferPerformanceSummary
+        GraphQLObjectType transferPerformance = newObject()
+                .name("transferPerformance")
+                .field(string("fromRoute"))
+                .field(string("toRoute"))
+                .field(intt("bestCase"))
+                .field(intt("worstCase"))
+                .field(intt("typicalCase"))
+//                .field(newFieldDefinition()
+//                        .name("missedOpportunities")
+//                        .type(new GraphQLList(new GraphQLTypeReference("stopTime")))
+////                        .dataFetcher(StopTimeFetcher::fromStop)
+//                        .build()
+//                )
+
+//                .field(new GraphQLList(intt()))
+                .build();
+
+        // stopStats should be modeled after com.conveyal.gtfs.stats.model.StopStatistic
+        GraphQLObjectType stopStats = newObject()
+                .name("stats")
+                .field(doublee("headway"))
+                .field(intt("tripCount"))
+                .build();
+
         return newObject()
                 .name("stop")
                 .field(string("stop_id"))
@@ -43,12 +70,21 @@ public class StopType {
                         .build()
                 )
                 .field(newFieldDefinition()
+                        .type(stopStats)
                         .name("stats")
-                        .type(StatType.build())
                         .argument(stringArg("date"))
                         .argument(longArg("from"))
                         .argument(longArg("to"))
-                        .dataFetcher(StopFetcher::getStats)
+                        .dataFetcher(StatFetcher::fromStop)
+                        .build()
+                )
+                .field(newFieldDefinition()
+                        .type(new GraphQLList(transferPerformance))
+                        .name("transferPerformance")
+                        .argument(stringArg("date"))
+                        .argument(longArg("from"))
+                        .argument(longArg("to"))
+                        .dataFetcher(StatFetcher::getTransferPerformance)
                         .build()
                 )
                 .build();

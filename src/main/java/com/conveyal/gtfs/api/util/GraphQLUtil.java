@@ -2,6 +2,7 @@ package com.conveyal.gtfs.api.util;
 
 import com.conveyal.gtfs.api.graphql.GeoJsonCoercing;
 import com.conveyal.gtfs.api.graphql.WrappedEntityFieldFetcher;
+import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
@@ -70,5 +71,9 @@ public class GraphQLUtil {
                 .name(name)
                 .type(GraphQLLong)
                 .build();
+    }
+
+    public static boolean argumentDefined(DataFetchingEnvironment env, String name) {
+        return (env.containsArgument(name) && env.getArgument(name) != null);
     }
 }
