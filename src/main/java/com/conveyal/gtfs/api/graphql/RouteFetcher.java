@@ -53,6 +53,7 @@ public class RouteFetcher {
         List<WrappedGTFSEntity<Route>> routes = feed.feed.patterns.values().stream()
                 .filter(p -> p.orderedStops.contains(stop.entity.stop_id))
                 .map(p -> feed.feed.routes.get(p.route_id))
+                .distinct()
                 .map(r -> new WrappedGTFSEntity<>(feed.id, r))
                 .collect(Collectors.toList());
 
