@@ -54,7 +54,7 @@ public class PatternFetcher {
                 .collect(Collectors.toList());
         if (stopIds != null) {
             return patterns.stream()
-                    .filter(p -> p.entity.orderedStops.containsAll(stopIds))
+                    .filter(p -> !Collections.disjoint(p.entity.orderedStops, stopIds)) // disjoint returns true if no elements in common
                     .collect(Collectors.toList());
         }
         else {
