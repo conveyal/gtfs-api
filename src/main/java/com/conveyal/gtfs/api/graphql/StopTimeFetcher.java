@@ -12,8 +12,10 @@ import org.mapdb.Fun;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +44,6 @@ public class StopTimeFetcher {
 
                 for (String id : stopId) {
                     feed.feed.getStopTimesForStop(id).stream()
-                            .map(t -> feed.feed.stop_times.get(t.b))
                             .map(st -> new WrappedGTFSEntity(feed.id, st))
                             .forEach(stopTimes::add);
                 }
@@ -82,41 +83,20 @@ public class StopTimeFetcher {
         WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) env.getSource();
         FeedSource fs = ApiMain.getFeedSource(stop.feedUniqueId);
 
-        Long beginTime = env.getArgument("begin_time");
-        Long endTime = env.getArgument("end_time");
+        String d = env.getArgument("date");
+        Long from = env.getArgument("from");
+        Long to = env.getArgument("to");
 
-        ZoneId zone = fs.feed.getTimeZoneForStop(stop.entity.stop_id);
 
-        ZoneOffset offset = zone.getRules().getOffset(Instant.now()); // TODO: is this the best way to get the offset?
-        LocalDateTime beginDateTime = LocalDateTime.ofEpochSecond(beginTime, 0, offset);
-        int beginSeconds = beginDateTime.getHour() * 3600 + beginDateTime.getMinute() * 60 + beginDateTime.getSecond();
-        LocalDateTime endDateTime = LocalDateTime.ofEpochSecond(endTime, 0, offset);
-        int endSeconds = endDateTime.getHour() * 3600 + endDateTime.getMinute() * 60 + endDateTime.getSecond();
+        LocalDate date = LocalDate.parse(d, DateTimeFormatter.ISO_LOCAL_DATE); // 2011-12-03
 
-        long days = ChronoUnit.DAYS.between(beginDateTime, endDateTime); // get days active
-        Set<String> services = fs.feed.services.values().stream()
-                .filter(s -> {
-                    for (int i = 0; i <= days; i++) {
-                        LocalDate date = beginDateTime.toLocalDate().plusDays(i);
-                        if (s.activeOn(date)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                })
-                .map(s -> s.service_id)
-                .collect(Collectors.toSet());
-
-        SortedSet<Fun.Tuple2<String, Fun.Tuple2>> index = fs.feed.stopStopTimeSet
-                .subSet(new Fun.Tuple2<>(stop.entity.stop_id, null), new Fun.Tuple2(stop.entity.stop_id, Fun.HI));
-
-        List<WrappedGTFSEntity<StopTime>> stopTimes = index.stream()
-                .map(t -> fs.feed.stop_times.get(t.b))
+        List<WrappedGTFSEntity<StopTime>> stopTimes = fs.feed.getStopTimesForStop(stop.entity.stop_id).stream()
                 .filter(st -> {
                     Trip trip = fs.feed.trips.get(st.trip_id);
 
-                    return services.contains(trip.service_id) // trip's service calendar is active on one of the days included in datetime range
-                            && (st.departure_time > beginSeconds && st.departure_time < endSeconds);
+                    // trip's service calendar is active on date and stopTime departs within time window
+                    return fs.feed.services.get(trip.service_id).activeOn(date)
+                            && (st.departure_time > from && st.departure_time < to);
                 })
                 .map(st -> new WrappedGTFSEntity<>(fs.id, st))
                 .collect(Collectors.toList());
