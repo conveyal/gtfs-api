@@ -1,6 +1,7 @@
-package com.conveyal.gtfs.api.graphql;
+package com.conveyal.gtfs.api.graphql.fetchers;
 
 import com.conveyal.gtfs.api.ApiMain;
+import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.model.FeedInfo;
 import graphql.schema.DataFetchingEnvironment;
 

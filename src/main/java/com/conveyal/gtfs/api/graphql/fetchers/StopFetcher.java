@@ -1,7 +1,7 @@
-package com.conveyal.gtfs.api.graphql;
+package com.conveyal.gtfs.api.graphql.fetchers;
 
-import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.ApiMain;
+import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.api.util.GeomUtil;
 import com.conveyal.gtfs.model.FeedInfo;
@@ -19,6 +19,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.conveyal.gtfs.api.util.GraphQLUtil.argumentDefined;
 
 /**
  * Created by matthewc on 3/9/16.
@@ -38,6 +40,7 @@ public class StopFetcher {
 
         List<WrappedGTFSEntity<Stop>> stops = new ArrayList<>();
 
+        // TODO: clear up possible scope issues feed and stop IDs
         for (FeedSource feed : feeds) {
             if (args.get("stop_id") != null) {
                 List<String> stopId = (List<String>) args.get("stop_id");
@@ -49,7 +52,7 @@ public class StopFetcher {
             }
             else {
                 // get stops by lat/lon/radius
-                if (args.get("lat") != null && args.get("lon") != null) {
+                if (argumentDefined(env, "lat") && argumentDefined(env, "lon")) {
                     Double lat = (Double) args.get("lat");
                     Double lon = (Double) args.get("lon");
                     Double radius = args.get("radius") == null ? DEFAULT_RADIUS : (Double) args.get("radius");
@@ -62,7 +65,8 @@ public class StopFetcher {
                             .forEach(stops::add);
                 }
                 // get stops by bounding box
-                else if (args.get("max_lat") != null && args.get("max_lon") != null && args.get("min_lat") != null && args.get("min_lon") != null) {
+                else if (argumentDefined(env, "min_lat") && argumentDefined(env, "max_lat") &&
+                        argumentDefined(env, "min_lon") && argumentDefined(env, "max_lon")) {
                     Coordinate maxCoordinate = new Coordinate((Double) args.get("max_lon"), (Double) args.get("max_lat"));
                     Coordinate minCoordinate = new Coordinate((Double) args.get("min_lon"), (Double) args.get("min_lat"));
                     Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
@@ -153,9 +157,5 @@ public class StopFetcher {
         }
 
         return stops.stream().count();
-    }
-
-    public static boolean argumentDefined(DataFetchingEnvironment env, String name) {
-        return (env.containsArgument(name) && env.getArgument(name) != null);
     }
 }

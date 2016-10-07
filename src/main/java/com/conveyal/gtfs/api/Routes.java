@@ -71,6 +71,11 @@ public class Routes {
         get(prefix + "/", (request, response) -> "GTFS Api");
 
         get(prefix + "/graphql", GraphQLController::get, json);
+        post(prefix + "/graphql", GraphQLController::get, json);
+
+        get(prefix + "/graphql/schema", GraphQLController::getSchema, json);
+        post(prefix + "/graphql/schema", GraphQLController::getSchema, json);
+
 
     }
 }

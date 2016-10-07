@@ -6,6 +6,10 @@ import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 //import com.googlecode.concurrenttrees.radix.ConcurrentRadixTree;
 //import com.googlecode.concurrenttrees.radix.RadixTree;
+import com.conveyal.gtfs.stats.FeedStats;
+import com.conveyal.gtfs.stats.PatternStats;
+import com.conveyal.gtfs.stats.RouteStats;
+import com.conveyal.gtfs.stats.StopStats;
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory;
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree;
 import com.googlecode.concurrenttrees.suffix.SuffixTree;
@@ -31,6 +35,7 @@ public class FeedSource {
     public SuffixTree<Stop> stopTree;
     public SuffixTree<Route> routeTree;
     public GTFSFeed feed;
+    public FeedStats stats;
 
     /**
      * a unique ID for this feed source. Not a GTFS feed ID as they are not unique between versions of
@@ -44,8 +49,13 @@ public class FeedSource {
         // independent of GTFS Feed ID as we track multiple versions of feeds.
         this.id = feed.feedId;
         initIndexes();
+        initStats();
     }
 
+    public void initStats () {
+        // Initialize stats
+        this.stats = new FeedStats(feed);
+    }
     public void initIndexes(){
         // Initialize and build route radix tree and spatial index
         this.routeIndex = new STRtree();
