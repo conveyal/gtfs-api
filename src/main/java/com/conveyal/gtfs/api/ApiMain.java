@@ -41,6 +41,7 @@ public class ApiMain {
     public static final Properties config = new Properties();
     private static String feedBucket;
     private static String dataDirectory;
+    private static String bucketFolder;
     public static LoadingCache<String, FeedSource> feedSources;
     private static GTFSCache gtfsCache;
 
@@ -57,18 +58,19 @@ public class ApiMain {
             in = new FileInputStream(new File(args[0]));
 
         config.load(in);
-        initialize(config.getProperty("s3.feeds-bucket"), config.getProperty("application.data"));
+        initialize(config.getProperty("s3.feeds-bucket"), config.getProperty("s3.bucket-folder"), config.getProperty("application.data"));
 
         CorsFilter.apply();
         Routes.routes("api");
     }
 
     /** Set up the GTFS API. If bundleBucket is null, S3 will not be used */
-    public static void initialize (String feedBucket, String dataDirectory) {
+    public static void initialize (String feedBucket, String bucketFolder, String dataDirectory) {
         ApiMain.feedBucket = feedBucket;
         ApiMain.dataDirectory = dataDirectory;
+        ApiMain.bucketFolder = bucketFolder;
 
-        gtfsCache = new GTFSCache(feedBucket, new File(dataDirectory));
+        gtfsCache = new GTFSCache(feedBucket, bucketFolder, new File(dataDirectory));
 
         // wrap the GTFS cache in a feed source cache
         feedSources = CacheBuilder.newBuilder()
@@ -85,6 +87,10 @@ public class ApiMain {
                 });
 
         registeredFeedSources = new ArrayList<>();
+    }
+
+    public static void initialize (String feedBucket, String dataDirectory) {
+        initialize(feedBucket, null, dataDirectory);
     }
 
     /** Register a new feed source with the API */

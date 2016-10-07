@@ -9,5 +9,6 @@ application.data=data/
 
 # The S3 bucket in which to get GTFS feeds
 s3.feeds-bucket=<BUCKET>
+s3.bucket-folder=gtfs
 s3.work-offline=false
 
