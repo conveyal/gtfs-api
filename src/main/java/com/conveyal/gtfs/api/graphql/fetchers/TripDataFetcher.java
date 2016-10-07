@@ -31,9 +31,6 @@ import java.time.temporal.ChronoUnit.*;
 
 import static spark.Spark.halt;
 
-/**
- * Fetch trip data given a route.
- */
 public class TripDataFetcher {
     public static List<WrappedGTFSEntity<Trip>> apex(DataFetchingEnvironment env) {
         Collection<FeedSource> feeds;
@@ -43,6 +40,7 @@ public class TripDataFetcher {
 
         List<WrappedGTFSEntity<Trip>> trips = new ArrayList<>();
 
+        // TODO: clear up possible scope issues feed and trip IDs
         for (FeedSource feed : feeds) {
             if (env.getArgument("trip_id") != null) {
                 List<String> tripId = (List<String>) env.getArgument("trip_id");
@@ -63,6 +61,10 @@ public class TripDataFetcher {
 
         return trips;
     }
+
+    /**
+     * Fetch trip data given a route.
+     */
     public static List<WrappedGTFSEntity<Trip>> fromRoute(DataFetchingEnvironment dataFetchingEnvironment) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
         FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);

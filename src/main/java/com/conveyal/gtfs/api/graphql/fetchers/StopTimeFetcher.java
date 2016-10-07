@@ -39,6 +39,7 @@ public class StopTimeFetcher {
 
         List<WrappedGTFSEntity<StopTime>> stopTimes = new ArrayList<>();
 
+        // TODO: clear up possible scope issues feed and stop IDs
         for (FeedSource feed : feeds) {
             if (env.getArgument("stop_id") != null) {
                 List<String> stopId = (List<String>) env.getArgument("stop_id");

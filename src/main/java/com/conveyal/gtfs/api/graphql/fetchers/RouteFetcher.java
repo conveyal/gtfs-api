@@ -5,6 +5,7 @@ import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.model.FeedInfo;
+import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 import graphql.schema.DataFetchingEnvironment;
@@ -29,6 +30,7 @@ public class RouteFetcher {
 
         List<WrappedGTFSEntity<Route>> routes = new ArrayList<>();
 
+        // TODO: clear up possible scope issues feed and route IDs
         for (FeedSource feed : feeds) {
             if (args.get("route_id") != null) {
                 List<String> routeId = (List<String>) args.get("route_id");
@@ -66,6 +68,14 @@ public class RouteFetcher {
         else {
             return routes;
         }
+    }
+
+    public static WrappedGTFSEntity<Route> fromPattern(DataFetchingEnvironment env) {
+        WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
+        List<String> routeIds = env.getArgument("route_id");
+
+        FeedSource feed = ApiMain.getFeedSource(pattern.feedUniqueId);
+        return new WrappedGTFSEntity<>(feed.id, feed.feed.routes.get(pattern.entity.route_id));
     }
 
     public static List<WrappedGTFSEntity<Route>> fromFeed(DataFetchingEnvironment environment) {

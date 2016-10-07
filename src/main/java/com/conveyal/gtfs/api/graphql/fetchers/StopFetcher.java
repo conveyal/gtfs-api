@@ -40,6 +40,7 @@ public class StopFetcher {
 
         List<WrappedGTFSEntity<Stop>> stops = new ArrayList<>();
 
+        // TODO: clear up possible scope issues feed and stop IDs
         for (FeedSource feed : feeds) {
             if (args.get("stop_id") != null) {
                 List<String> stopId = (List<String>) args.get("stop_id");
