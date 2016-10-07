@@ -64,6 +64,10 @@ public class ApiMain {
         Routes.routes("api");
     }
 
+    public static void initialize (String feedBucket, String dataDirectory) {
+        initialize(feedBucket, null, dataDirectory);
+    }
+
     /** Set up the GTFS API. If bundleBucket is null, S3 will not be used */
     public static void initialize (String feedBucket, String bucketFolder, String dataDirectory) {
         ApiMain.feedBucket = feedBucket;
@@ -71,7 +75,10 @@ public class ApiMain {
         ApiMain.bucketFolder = bucketFolder;
 
         gtfsCache = new GTFSCache(feedBucket, bucketFolder, new File(dataDirectory));
+        initialize(gtfsCache);
+    }
 
+    public static void initialize (GTFSCache gtfsCache) {
         // wrap the GTFS cache in a feed source cache
         feedSources = CacheBuilder.newBuilder()
                 .maximumSize(15)
@@ -87,10 +94,6 @@ public class ApiMain {
                 });
 
         registeredFeedSources = new ArrayList<>();
-    }
-
-    public static void initialize (String feedBucket, String dataDirectory) {
-        initialize(feedBucket, null, dataDirectory);
     }
 
     /** Register a new feed source with the API */
