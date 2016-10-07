@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.GraphQLError;
+import graphql.introspection.IntrospectionQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -28,15 +29,21 @@ public class GraphQLController {
 
     public static Object get (Request req, Response res) {
         Map<String, Object> variables = null;
+        String vars = req.queryParams("variables");
+        String query = req.queryParams("query");
+
+        if (vars == null && query == null) {
+            return new GraphQL(GraphQLGtfsSchema.schema).execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
+        }
         try {
-            variables = mapper.readValue(req.queryParams("variables"), new TypeReference<Map<String, Object>>() {
+            variables = mapper.readValue(vars, new TypeReference<Map<String, Object>>() {
             });
         } catch (IOException e) {
             LOG.warn("Error processing variable JSON", e);
             halt(404, "Malformed JSON");
         }
 
-        ExecutionResult er = new GraphQL(GraphQLGtfsSchema.schema).execute(req.queryParams("query"), null, null, variables);
+        ExecutionResult er = new GraphQL(GraphQLGtfsSchema.schema).execute(query, null, null, variables);
         List<GraphQLError> errs = er.getErrors();
         if (!errs.isEmpty()) {
             res.status(400);
@@ -45,5 +52,9 @@ public class GraphQLController {
         else {
             return er.getData();
         }
+    }
+
+    public static Object getSchema (Request req, Response res) {
+        return new GraphQL(GraphQLGtfsSchema.schema).execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
     }
 }
