@@ -1,26 +1,21 @@
-package com.conveyal.gtfs.api.graphql;
+package com.conveyal.gtfs.api.graphql.fetchers;
 
-import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.ApiMain;
+import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.api.util.GeomUtil;
 import com.conveyal.gtfs.model.FeedInfo;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Stop;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import graphql.schema.DataFetchingEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
