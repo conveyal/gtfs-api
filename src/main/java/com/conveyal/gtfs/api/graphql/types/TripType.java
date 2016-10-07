@@ -1,8 +1,8 @@
 package com.conveyal.gtfs.api.graphql.types;
 
-import com.conveyal.gtfs.api.graphql.PatternFetcher;
-import com.conveyal.gtfs.api.graphql.StopTimeFetcher;
-import com.conveyal.gtfs.api.graphql.TripDataFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.PatternFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.StopTimeFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;

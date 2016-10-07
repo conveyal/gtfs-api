@@ -1,7 +1,8 @@
 package com.conveyal.gtfs.api.graphql.types;
 
-import com.conveyal.gtfs.api.graphql.StopFetcher;
-import com.conveyal.gtfs.api.graphql.TripDataFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.RouteFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.StopFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
 import com.conveyal.gtfs.api.graphql.WrappedEntityFieldFetcher;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
@@ -22,28 +23,40 @@ public class PatternType {
 
         return newObject()
                 .name("pattern")
+                .description("A unique sequence of stops that a GTFS route visits")
                 .field(string("pattern_id"))
                 .field(string("name"))
                 .field(newFieldDefinition()
+                        .name("route")
+                        .description("Route that pattern operates along")
+                        .dataFetcher(RouteFetcher::fromPattern)
+                        .type(new GraphQLList(new GraphQLTypeReference("route")))
+                        .build()
+                )
+                .field(newFieldDefinition()
                         .name("stops")
+                        .description("Stops that pattern serves")
                         .dataFetcher(StopFetcher::fromPattern)
                         .type(new GraphQLList(new GraphQLTypeReference("stop")))
                         .build()
                 )
                 .field(newFieldDefinition()
                         .type(GraphQLLong)
+                        .description("Count of stops that pattern serves")
                         .name("stop_count")
                         .dataFetcher(StopFetcher::fromPatternCount)
                         .build()
                 )
                 .field(newFieldDefinition()
                         .type(lineString())
+                        .description("Geometry that pattern operates along")
                         .dataFetcher(new WrappedEntityFieldFetcher("geometry"))
                         .name("geometry")
                         .build()
                 )
                 .field(newFieldDefinition()
                         .name("trips")
+                        .description("Trips associated with pattern")
                         .type(new GraphQLList(new GraphQLTypeReference("trip")))
                         .dataFetcher(TripDataFetcher::fromPattern)
                         .argument(longArg("begin_time"))
@@ -52,6 +65,7 @@ public class PatternType {
                 )
                 .field(newFieldDefinition()
                         .type(GraphQLLong)
+                        .description("Count of trips associated with pattern")
                         .name("trip_count")
                         .dataFetcher(TripDataFetcher::fromPatternCount)
                         .build()

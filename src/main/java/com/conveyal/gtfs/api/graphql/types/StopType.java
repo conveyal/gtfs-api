@@ -1,9 +1,8 @@
 package com.conveyal.gtfs.api.graphql.types;
 
-import com.conveyal.gtfs.api.graphql.RouteFetcher;
-import com.conveyal.gtfs.api.graphql.StatFetcher;
-import com.conveyal.gtfs.api.graphql.StopFetcher;
-import com.conveyal.gtfs.api.graphql.StopTimeFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.RouteFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.StatFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.StopTimeFetcher;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
@@ -21,6 +20,7 @@ public class StopType {
         // transferPerformance should be modeled after com.conveyal.gtfs.stats.model.TransferPerformanceSummary
         GraphQLObjectType transferPerformance = newObject()
                 .name("transferPerformance")
+                .description("Transfer performance for a stop")
                 .field(string("fromRoute"))
                 .field(string("toRoute"))
                 .field(intt("bestCase"))
@@ -38,13 +38,15 @@ public class StopType {
 
         // stopStats should be modeled after com.conveyal.gtfs.stats.model.StopStatistic
         GraphQLObjectType stopStats = newObject()
-                .name("stats")
+                .name("stopStats")
+                .description("Statistics about a stop")
                 .field(doublee("headway"))
                 .field(intt("tripCount"))
                 .build();
 
         return newObject()
                 .name("stop")
+                .description("A GTFS stop object")
                 .field(string("stop_id"))
                 .field(string("stop_name"))
                 .field(string("stop_code"))
@@ -56,14 +58,17 @@ public class StopType {
                 .field(string("stop_timezone"))
                 .field(newFieldDefinition()
                         .name("stop_times")
+                        .description("The list of stop_times for a stop")
                         .type(new GraphQLList(new GraphQLTypeReference("stopTime")))
-                        .argument(longArg("begin_time"))
-                        .argument(longArg("end_time"))
+                        .argument(stringArg("date"))
+                        .argument(longArg("from"))
+                        .argument(longArg("to"))
                         .dataFetcher(StopTimeFetcher::fromStop)
                         .build()
                 )
                 .field(newFieldDefinition()
                         .name("routes")
+                        .description("The list of routes that serve a stop")
                         .type(new GraphQLList(new GraphQLTypeReference("route")))
                         .argument(multiStringArg("route_id"))
                         .dataFetcher(RouteFetcher::fromStop)

@@ -1,8 +1,8 @@
 package com.conveyal.gtfs.api.graphql.types;
 
-import com.conveyal.gtfs.api.graphql.PatternFetcher;
-import com.conveyal.gtfs.api.graphql.StatFetcher;
-import com.conveyal.gtfs.api.graphql.TripDataFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.PatternFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.StatFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
@@ -19,12 +19,14 @@ public class RouteType {
     public static GraphQLObjectType build () {
         // routeStats should be modeled after com.conveyal.gtfs.stats.model.RouteStatistic
         GraphQLObjectType routeStats = newObject()
-                .name("stats")
+                .name("routeStats")
+                .description("Statistics about a route")
                 .field(doublee("headway"))
                 .build();
 
         return newObject()
                 .name("route")
+                .description("A GTFS route object")
                 .field(string("route_id"))
                 // TODO agency
                 .field(string("route_short_name"))

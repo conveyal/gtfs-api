@@ -1,6 +1,6 @@
 package com.conveyal.gtfs.api.graphql.types;
 
-import com.conveyal.gtfs.api.graphql.TripDataFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
 
@@ -25,8 +25,9 @@ public class StopTimeType {
                         .name("trip")
                         .type(new GraphQLTypeReference("trip"))
                         .dataFetcher(TripDataFetcher::fromStopTime)
-                        .argument(longArg("begin_time"))
-                        .argument(longArg("end_time"))
+                        .argument(stringArg("date"))
+                        .argument(longArg("from"))
+                        .argument(longArg("to"))
                         .build()
                 )
                 .build();

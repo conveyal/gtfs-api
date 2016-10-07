@@ -1,7 +1,7 @@
 package com.conveyal.gtfs.api.graphql.types;
 
-import com.conveyal.gtfs.api.graphql.RouteFetcher;
-import com.conveyal.gtfs.api.graphql.StopFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.RouteFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.StopFetcher;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
@@ -19,6 +19,7 @@ public class FeedType {
     public static GraphQLObjectType build () {
         return newObject()
                 .name("feed")
+                .description("Provides information for a GTFS feed and access to the entities it contains")
                 .field(string("feed_id"))
                 .field(string("feed_publisher_name"))
                 .field(string("feed_publisher_url"))
