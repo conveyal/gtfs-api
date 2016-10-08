@@ -52,6 +52,7 @@ public class RouteType {
                         .type(new GraphQLList(new GraphQLTypeReference("pattern")))
                         .name("patterns")
                         .argument(multiStringArg("stop_id"))
+                        .argument(multiStringArg("pattern_id"))
                         .dataFetcher(PatternFetcher::fromRoute)
                         .build()
                 )

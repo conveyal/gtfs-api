@@ -51,6 +51,8 @@ public class GraphQLGtfsSchema {
                     .type(new GraphQLList(stopType))
                     .argument(multiStringArg("feed_id"))
                     .argument(multiStringArg("stop_id"))
+                    .argument(multiStringArg("route_id"))
+                    .argument(multiStringArg("pattern_id"))
                     .argument(floatArg("lat"))
                     .argument(floatArg("lon"))
                     .argument(floatArg("radius"))
