@@ -50,11 +50,12 @@ public class StopFetcher {
                         .map(s -> new WrappedGTFSEntity(feed.id, s))
                         .forEach(stops::add);
             }
-            else if (args.get("route_id") != null) {
-                List<String> routeId = (List<String>) args.get("route_id");
+            // TODO: should pattern pre-empt route or should they operate together?
+            else if (args.get("pattern_id") != null) {
+                List<String> patternId = (List<String>) args.get("pattern_id");
 
                 feed.feed.patterns.values().stream()
-                        .filter(p -> routeId.contains(p.route_id))
+                        .filter(p -> patternId.contains(p.pattern_id))
                         .map(p -> feed.feed.getOrderedStopListForTrip(p.associatedTrips.get(0)))
                         .flatMap(List::stream)
                         .map(feed.feed.stops::get)
@@ -62,11 +63,11 @@ public class StopFetcher {
                         .map(stop -> new WrappedGTFSEntity(feed.id, stop))
                         .forEach(stops::add);
             }
-            else if (args.get("pattern_id") != null) {
-                List<String> patternId = (List<String>) args.get("pattern_id");
+            else if (args.get("route_id") != null) {
+                List<String> routeId = (List<String>) args.get("route_id");
 
                 feed.feed.patterns.values().stream()
-                        .filter(p -> patternId.contains(p.pattern_id))
+                        .filter(p -> routeId.contains(p.route_id))
                         .map(p -> feed.feed.getOrderedStopListForTrip(p.associatedTrips.get(0)))
                         .flatMap(List::stream)
                         .map(feed.feed.stops::get)
