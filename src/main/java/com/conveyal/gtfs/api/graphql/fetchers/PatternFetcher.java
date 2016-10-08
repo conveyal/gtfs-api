@@ -48,19 +48,24 @@ public class PatternFetcher {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) env.getSource();
         FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
         List<String> stopIds = env.getArgument("stop_id");
+        List<String> patternId = env.getArgument("pattern_id");
 
         List<WrappedGTFSEntity<Pattern>> patterns = feed.feed.patterns.values().stream()
                 .filter(p -> p.route_id.equals(route.entity.route_id))
                 .map(p -> new WrappedGTFSEntity<>(feed.id, p))
                 .collect(Collectors.toList());
+        if (patternId != null) {
+            patterns.stream()
+                    .filter(p -> patternId.contains(p.entity.pattern_id))
+                    .collect(Collectors.toList());
+        }
         if (stopIds != null) {
-            return patterns.stream()
+            patterns.stream()
                     .filter(p -> !Collections.disjoint(p.entity.orderedStops, stopIds)) // disjoint returns true if no elements in common
                     .collect(Collectors.toList());
         }
-        else {
-            return patterns;
-        }
+
+        return patterns;
     }
 
     public static long fromRouteCount(DataFetchingEnvironment env) {
