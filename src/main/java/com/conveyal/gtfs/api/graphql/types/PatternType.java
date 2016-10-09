@@ -26,6 +26,7 @@ public class PatternType {
                 .description("A unique sequence of stops that a GTFS route visits")
                 .field(string("pattern_id"))
                 .field(string("name"))
+                .field(string("route_id"))
                 .field(newFieldDefinition()
                         .name("route")
                         .description("Route that pattern operates along")
