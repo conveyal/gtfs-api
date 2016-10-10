@@ -28,8 +28,8 @@ public class GeoJsonCoercing implements Coercing {
             GeoJsonMultiPolygon ret = new GeoJsonMultiPolygon();
             ret.coordinates = Stream.of(g.getCoordinates())
                     .map(c -> new double[] { c.x, c.y })
-                    .toArray(i -> new double[i][])
                     .toArray(i -> new double[i][]);
+//                    .toArray(i -> new double[i][]);
 
             return ret;
         }
@@ -53,6 +53,6 @@ public class GeoJsonCoercing implements Coercing {
 
     private static class GeoJsonMultiPolygon {
         public final String type = "MultiPolygon";
-        public double[][][] coordinates;
+        public double[][] coordinates;
     }
 }
