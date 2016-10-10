@@ -2,7 +2,9 @@ package com.conveyal.gtfs.api.graphql.fetchers;
 
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
+import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.model.FeedInfo;
+import com.vividsolutions.jts.geom.Geometry;
 import graphql.schema.DataFetchingEnvironment;
 
 import java.util.List;
@@ -33,5 +35,11 @@ public class FeedFetcher {
                 })
                 .collect(Collectors.toList());
 
+    }
+
+    public static Geometry getMergedBuffer(DataFetchingEnvironment env) {
+        WrappedGTFSEntity<FeedInfo> feedInfo = (WrappedGTFSEntity<FeedInfo>) env.getSource();
+        FeedSource feed = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        return feed.feed.getMergedBuffers();
     }
 }

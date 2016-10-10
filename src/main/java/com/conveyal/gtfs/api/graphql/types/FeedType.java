@@ -1,11 +1,14 @@
 package com.conveyal.gtfs.api.graphql.types;
 
+import com.conveyal.gtfs.api.graphql.WrappedEntityFieldFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.FeedFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.RouteFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.StopFetcher;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
 
+import static com.conveyal.gtfs.api.util.GraphQLUtil.lineString;
 import static com.conveyal.gtfs.api.util.GraphQLUtil.multiStringArg;
 import static com.conveyal.gtfs.api.util.GraphQLUtil.string;
 import static graphql.Scalars.GraphQLLong;
@@ -50,7 +53,13 @@ public class FeedType {
                         .dataFetcher(StopFetcher::fromFeedCount)
                         .build()
                 )
-
+                .field(newFieldDefinition()
+                        .name("mergedBuffer")
+                        .type(lineString())
+                        .description("Geometry that pattern operates along")
+                        .dataFetcher(FeedFetcher::getMergedBuffer)
+                        .build()
+                )
                 .build();
     }
 }
