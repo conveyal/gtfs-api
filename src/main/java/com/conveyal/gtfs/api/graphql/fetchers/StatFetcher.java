@@ -3,8 +3,10 @@ package com.conveyal.gtfs.api.graphql.fetchers;
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.api.models.FeedSource;
+import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
+import com.conveyal.gtfs.stats.model.PatternStatistic;
 import com.conveyal.gtfs.stats.model.RouteStatistic;
 import com.conveyal.gtfs.stats.model.StopStatistic;
 import com.conveyal.gtfs.stats.model.TransferPerformanceSummary;
@@ -55,6 +57,26 @@ public class StatFetcher {
             LocalTime to = LocalTime.ofSecondOfDay(t);
 
             return new RouteStatistic(fs.stats.route, route.entity.route_id, date, from, to);
+        }
+        else {
+            return null;
+        }
+    }
+
+    public static PatternStatistic fromPattern(DataFetchingEnvironment env) {
+        WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
+        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+
+        if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
+            String d = (String) env.getArgument("date");
+            long f = (long) env.getArgument("from");
+            long t = (long) env.getArgument("to");
+
+            LocalDate date = LocalDate.parse(d, DateTimeFormatter.ISO_LOCAL_DATE); // 2011-12-03
+            LocalTime from = LocalTime.ofSecondOfDay(f);
+            LocalTime to = LocalTime.ofSecondOfDay(t);
+
+            return new PatternStatistic(fs.stats.pattern, pattern.entity.pattern_id, date, from, to);
         }
         else {
             return null;

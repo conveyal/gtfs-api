@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.api.graphql.types;
 
 import com.conveyal.gtfs.api.graphql.fetchers.RouteFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.StatFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.StopFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
 import com.conveyal.gtfs.api.graphql.WrappedEntityFieldFetcher;
@@ -8,9 +9,7 @@ import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
 
-import static com.conveyal.gtfs.api.util.GraphQLUtil.lineString;
-import static com.conveyal.gtfs.api.util.GraphQLUtil.longArg;
-import static com.conveyal.gtfs.api.util.GraphQLUtil.string;
+import static com.conveyal.gtfs.api.util.GraphQLUtil.*;
 import static graphql.Scalars.GraphQLLong;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
@@ -20,6 +19,12 @@ import static graphql.schema.GraphQLObjectType.newObject;
  */
 public class PatternType {
     public static GraphQLObjectType build () {
+        GraphQLObjectType patternStats = newObject()
+                .name("patternStats")
+                .description("Statistics about a pattern")
+                .field(doublee("headway"))
+                .field(doublee("avgSpeed"))
+                .build();
 
         return newObject()
                 .name("pattern")
@@ -69,6 +74,15 @@ public class PatternType {
                         .description("Count of trips associated with pattern")
                         .name("trip_count")
                         .dataFetcher(TripDataFetcher::fromPatternCount)
+                        .build()
+                )
+                .field(newFieldDefinition()
+                        .type(patternStats)
+                        .name("stats")
+                        .argument(stringArg("date"))
+                        .argument(longArg("from"))
+                        .argument(longArg("to"))
+                        .dataFetcher(StatFetcher::fromPattern)
                         .build()
                 )
                 .build();
