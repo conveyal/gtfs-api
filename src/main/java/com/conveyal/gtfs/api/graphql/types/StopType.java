@@ -42,6 +42,7 @@ public class StopType {
                 .description("Statistics about a stop")
                 .field(doublee("headway"))
                 .field(intt("tripCount"))
+                .field(intt("routeCount"))
                 .build();
 
         return newObject()

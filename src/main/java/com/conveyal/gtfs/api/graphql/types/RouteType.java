@@ -23,6 +23,7 @@ public class RouteType {
                 .description("Statistics about a route")
                 .field(doublee("headway"))
                 .field(doublee("avgSpeed"))
+                .field(doublee("stopSpacing"))
                 .build();
 
         return newObject()

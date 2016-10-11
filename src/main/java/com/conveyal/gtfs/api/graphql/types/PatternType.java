@@ -24,6 +24,7 @@ public class PatternType {
                 .description("Statistics about a pattern")
                 .field(doublee("headway"))
                 .field(doublee("avgSpeed"))
+                .field(doublee("stopSpacing"))
                 .build();
 
         return newObject()

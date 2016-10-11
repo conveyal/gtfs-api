@@ -3,14 +3,14 @@ package com.conveyal.gtfs.api.graphql.types;
 import com.conveyal.gtfs.api.graphql.WrappedEntityFieldFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.FeedFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.RouteFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.StatFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.StopFetcher;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
 
-import static com.conveyal.gtfs.api.util.GraphQLUtil.lineString;
-import static com.conveyal.gtfs.api.util.GraphQLUtil.multiStringArg;
-import static com.conveyal.gtfs.api.util.GraphQLUtil.string;
+import static com.conveyal.gtfs.api.util.GraphQLUtil.*;
+import static com.conveyal.gtfs.api.util.GraphQLUtil.doublee;
 import static graphql.Scalars.GraphQLLong;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
@@ -20,6 +20,16 @@ import static graphql.schema.GraphQLObjectType.newObject;
  */
 public class FeedType {
     public static GraphQLObjectType build () {
+        // TODO: add feedStats to FeedType. 
+//        GraphQLObjectType feedStats = newObject()
+//                .name("feedStats")
+//                .description("Statistics about a feed")
+//                .field(intt("headway"))
+//                .field(doublee("avgSpeed"))
+//                .field(intt("tripCount"))
+//                .field(intt("revenueTime"))
+//                .build();
+
         return newObject()
                 .name("feed")
                 .description("Provides information for a GTFS feed and access to the entities it contains")
@@ -56,10 +66,19 @@ public class FeedType {
                 .field(newFieldDefinition()
                         .name("mergedBuffer")
                         .type(lineString())
-                        .description("Geometry that pattern operates along")
+                        .description("Merged buffers around all stops in feed")
                         .dataFetcher(FeedFetcher::getMergedBuffer)
                         .build()
                 )
+//                .field(newFieldDefinition()
+//                        .type(feedStats)
+//                        .name("stats")
+//                        .argument(stringArg("date"))
+//                        .argument(longArg("from"))
+//                        .argument(longArg("to"))
+//                        .dataFetcher(StatFetcher::fromFeed)
+//                        .build()
+//                )
                 .build();
     }
 }
