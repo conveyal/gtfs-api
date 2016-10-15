@@ -61,30 +61,23 @@ public class FeedSource {
         this.routeIndex = new STRtree();
         this.routeTree = new ConcurrentSuffixTree<Route>( new DefaultCharArrayNodeFactory() ) {};
 
-        // spatial
-        Set<Route> indexedRoutes = new HashSet<>();
-        for (Pattern pattern : this.feed.patterns.values()){
-            if (pattern.geometry == null) {
-                LOG.warn("Pattern {} in feed {} has no geometry. It will not be included in indices. It has {} stops, if this is less than 2 this message is expected.",
-                        pattern.pattern_id, feed.feedId, pattern.orderedStops.size());
-                continue;
-            }
-
-            Route currentRoute = this.feed.routes.get(this.feed.trips.get(pattern.associatedTrips.get(0)).route_id);
-//          TODO: check if list of routes already contains current route
-            if (!indexedRoutes.contains(currentRoute)){
-                //            System.out.println(this.feed.trips.get(pattern.associatedTrips.get(0)).trip_headsign);
-                Envelope routeEnvelope = pattern.geometry.getEnvelopeInternal();
-//            Envelope routeEnvelope = new Envelope(pattern.geometry.getEndPoint().getCoordinate());
-//            Envelope routeEnvelope = new Envelope(new Coordinate(-122.0, 37.0));
-//            Envelope routeEnvelope = new Envelope(pattern.geometry.getCentroid().getCoordinate());
-                this.routeIndex.insert(routeEnvelope, pattern);
-                indexedRoutes.add(currentRoute);
-            }
-        }
+        // init spatial index
+        Set<String> indexedRoutes = new HashSet<>();
+        this.feed.patterns.values().stream()
+                .forEach(pattern -> {
+                    if (pattern.geometry == null) {
+                        LOG.warn("Pattern {} in feed {} has no geometry. It will not be included in indices. It has {} stops, if this is less than 2 this message is expected.",
+                                pattern.pattern_id, feed.feedId, pattern.orderedStops.size());
+                    }
+                    else if (!indexedRoutes.contains(pattern.route_id)) {
+                        Envelope routeEnvelope = pattern.geometry.getEnvelopeInternal();
+                        this.routeIndex.insert(routeEnvelope, pattern);
+                        indexedRoutes.add(pattern.route_id);
+                    }
+                });
         this.routeIndex.build();
 
-        // string
+        // init string index
         for (Route route : this.feed.routes.values()){
             // TODO: consider concatenating short name and long name
             if (route.route_short_name != null && !route.route_short_name.isEmpty())

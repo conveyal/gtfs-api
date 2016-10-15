@@ -80,7 +80,7 @@ public class RoutesController {
         else if (req.queryParams("lat") != null && req.queryParams("lon") != null){
             Coordinate latLon = new Coordinate(Double.valueOf(req.queryParams("lon")), Double.valueOf(req.queryParams("lat")));
             if (req.queryParams("radius") != null){
-                StopsController.radius = Double.valueOf(req.queryParams("radius"));
+                RoutesController.radius = Double.valueOf(req.queryParams("radius"));
             }
             Envelope searchEnvelope = GeomUtil.getBoundingBox(latLon, radius);
 

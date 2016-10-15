@@ -26,7 +26,7 @@ import static spark.Spark.*;
  * Created by landon on 2/4/16.
  */
 public class StopsController {
-    public static Double radius = 1.0; // default 1 km search radius
+    private static Double radius = 1.0; // default 1 km search radius
     public static Object getStops(Request req, Response res){
 
         Set<Stop> stops = new HashSet<>();
@@ -50,9 +50,7 @@ public class StopsController {
                 }
             }
         }
-        else{
-//            res.body("Must specify valid feed id.");
-//            return "Must specify valid feed id.";
+        else {
             halt(404, "Must specify valid feed id.");
         }
 
