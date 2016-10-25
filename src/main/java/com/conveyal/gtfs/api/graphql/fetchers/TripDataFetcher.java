@@ -36,7 +36,7 @@ public class TripDataFetcher {
         Collection<FeedSource> feeds;
 
         List<String> feedId = (List<String>) env.getArgument("feed_id");
-        feeds = feedId.stream().map(ApiMain::getFeedSource).collect(Collectors.toList());
+        feeds = ApiMain.getFeedSources(feedId);
 
         List<WrappedGTFSEntity<Trip>> trips = new ArrayList<>();
 
@@ -67,41 +67,46 @@ public class TripDataFetcher {
      */
     public static List<WrappedGTFSEntity<Trip>> fromRoute(DataFetchingEnvironment dataFetchingEnvironment) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
-        FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(route.feedUniqueId);
+        if (fs == null) return null;
 
-        return feed.feed.trips.values().stream()
+        return fs.feed.trips.values().stream()
                 .filter(t -> t.route_id.equals(route.entity.route_id))
-                .map(t -> new WrappedGTFSEntity<>(feed.id, t))
+                .map(t -> new WrappedGTFSEntity<>(fs.id, t))
                 .collect(Collectors.toList());
     }
 
     public static Long fromRouteCount(DataFetchingEnvironment dataFetchingEnvironment) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
-        FeedSource feed = ApiMain.getFeedSource(route.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(route.feedUniqueId);
+        if (fs == null) return null;
 
-        return feed.feed.trips.values().stream()
+        return fs.feed.trips.values().stream()
                 .filter(t -> t.route_id.equals(route.entity.route_id))
                 .count();
     }
 
     public static WrappedGTFSEntity<Trip> fromStopTime (DataFetchingEnvironment env) {
         WrappedGTFSEntity<StopTime> stopTime = (WrappedGTFSEntity<StopTime>) env.getSource();
-        FeedSource feed = ApiMain.getFeedSource(stopTime.feedUniqueId);
-        Trip trip = feed.feed.trips.get(stopTime.entity.trip_id);
+        FeedSource fs = ApiMain.getFeedSource(stopTime.feedUniqueId);
+        if (fs == null) return null;
+
+        Trip trip = fs.feed.trips.get(stopTime.entity.trip_id);
 
         return new WrappedGTFSEntity<>(stopTime.feedUniqueId, trip);
     }
 
     public static List<WrappedGTFSEntity<Trip>> fromPattern (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
-        FeedSource feed = ApiMain.getFeedSource(pattern.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        if (fs == null) return null;
 
         Long beginTime = env.getArgument("begin_time");
         Long endTime = env.getArgument("end_time");
 
         if (beginTime != null && endTime != null) {
-            String agencyId = feed.feed.routes.get(pattern.entity.route_id).agency_id;
-            Agency agency = agencyId != null ? feed.feed.agency.get(agencyId) : null;
+            String agencyId = fs.feed.routes.get(pattern.entity.route_id).agency_id;
+            Agency agency = agencyId != null ? fs.feed.agency.get(agencyId) : null;
             if (beginTime >= endTime) {
                 halt(404, "end_time must be greater than begin_time.");
             }
@@ -111,7 +116,7 @@ public class TripDataFetcher {
             int endSeconds = endDateTime.getSecond();
             long days = ChronoUnit.DAYS.between(beginDateTime, endDateTime);
             ZoneId zone =  agency != null ? ZoneId.of(agency.agency_timezone) : ZoneId.systemDefault();
-            Set<String> services = feed.feed.services.values().stream()
+            Set<String> services = fs.feed.services.values().stream()
                     .filter(s -> {
                         for (int i = 0; i < days; i++) {
                             LocalDate date = beginDateTime.toLocalDate().plusDays(i);
@@ -123,14 +128,14 @@ public class TripDataFetcher {
                     })
                     .map(s -> s.service_id)
                     .collect(Collectors.toSet());
-            return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get)
+            return pattern.entity.associatedTrips.stream().map(fs.feed.trips::get)
                     .filter(t -> services.contains(t.service_id))
-                    .map(t -> new WrappedGTFSEntity<>(feed.id, t))
+                    .map(t -> new WrappedGTFSEntity<>(fs.id, t))
                     .collect(Collectors.toList());
         }
         else {
-            return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get)
-                    .map(t -> new WrappedGTFSEntity<>(feed.id, t))
+            return pattern.entity.associatedTrips.stream().map(fs.feed.trips::get)
+                    .map(t -> new WrappedGTFSEntity<>(fs.id, t))
                     .collect(Collectors.toList());
         }
     }
@@ -138,24 +143,28 @@ public class TripDataFetcher {
     public static Long fromPatternCount (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
 
-        FeedSource feed = ApiMain.getFeedSource(pattern.feedUniqueId);
-        return pattern.entity.associatedTrips.stream().map(feed.feed.trips::get).count();
+        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        if (fs == null) return null;
+
+        return pattern.entity.associatedTrips.stream().map(fs.feed.trips::get).count();
     }
 
     public static Integer getStartTime(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(trip.feedUniqueId);
+        if (fs == null) return null;
 
-        Map.Entry<Fun.Tuple2, StopTime> st = feed.feed.stop_times.ceilingEntry(new Fun.Tuple2(trip.entity.trip_id, null));
+        Map.Entry<Fun.Tuple2, StopTime> st = fs.feed.stop_times.ceilingEntry(new Fun.Tuple2(trip.entity.trip_id, null));
         return st != null ? st.getValue().departure_time : null;
     }
 
     public static Integer getDuration(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource feed = ApiMain.getFeedSource(trip.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(trip.feedUniqueId);
+        if (fs == null) return null;
 
         Integer startTime = getStartTime(env);
-        Map.Entry<Fun.Tuple2, StopTime> endStopTime = feed.feed.stop_times.floorEntry(new Fun.Tuple2(trip.entity.trip_id, Fun.HI));
+        Map.Entry<Fun.Tuple2, StopTime> endStopTime = fs.feed.stop_times.floorEntry(new Fun.Tuple2(trip.entity.trip_id, Fun.HI));
 
         if (startTime == null || endStopTime == null || endStopTime.getValue().arrival_time < startTime) return null;
         else return endStopTime.getValue().arrival_time - startTime;

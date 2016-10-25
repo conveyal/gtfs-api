@@ -28,6 +28,7 @@ public class StatFetcher {
     public static StopStatistic fromStop(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) env.getSource();
         FeedSource fs = ApiMain.getFeedSource(stop.feedUniqueId);
+        if (fs == null) return null;
 
         if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
             String d = (String) env.getArgument("date");
@@ -48,6 +49,7 @@ public class StatFetcher {
     public static RouteStatistic fromRoute(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) env.getSource();
         FeedSource fs = ApiMain.getFeedSource(route.feedUniqueId);
+        if (fs == null) return null;
 
         if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
             String d = (String) env.getArgument("date");
@@ -68,6 +70,7 @@ public class StatFetcher {
     public static PatternStatistic fromPattern(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
         FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        if (fs == null) return null;
 
         if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
             String d = (String) env.getArgument("date");
@@ -88,6 +91,7 @@ public class StatFetcher {
     public static List<TransferPerformanceSummary> getTransferPerformance(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) env.getSource();
         FeedSource fs = ApiMain.getFeedSource(stop.feedUniqueId);
+        if (fs == null) return null;
 
         if (argumentDefined(env, "date")) {
             String d = (String) env.getArgument("date");
@@ -100,7 +104,9 @@ public class StatFetcher {
 
     public static FeedStatistic fromFeed(DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> feedInfo = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource feed = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        if (fs == null) return null;
+
         if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
             String d = (String) env.getArgument("date");
             long f = (long) env.getArgument("from");
@@ -110,7 +116,7 @@ public class StatFetcher {
             LocalTime from = LocalTime.ofSecondOfDay(f);
             LocalTime to = LocalTime.ofSecondOfDay(t);
 
-            return new FeedStatistic(feed.stats, date, from, to);
+            return new FeedStatistic(fs.stats, date, from, to);
         }
         else {
             return null;

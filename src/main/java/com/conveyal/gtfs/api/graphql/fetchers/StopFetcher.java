@@ -36,7 +36,7 @@ public class StopFetcher {
         Collection<FeedSource> feeds;
 
         List<String> feedId = (List<String>) args.get("feed_id");
-        feeds = feedId.stream().map(ApiMain::getFeedSource).collect(Collectors.toList());
+        feeds = ApiMain.getFeedSources(feedId);
 
         List<WrappedGTFSEntity<Stop>> stops = new ArrayList<>();
 
@@ -121,12 +121,13 @@ public class StopFetcher {
             return Collections.emptyList();
         }
 
-        FeedSource source = ApiMain.getFeedSource(pattern.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        if (fs == null) return null;
 
-        return source.feed.getOrderedStopListForTrip(pattern.entity.associatedTrips.get(0))
+        return fs.feed.getOrderedStopListForTrip(pattern.entity.associatedTrips.get(0))
                 .stream()
-                .map(source.feed.stops::get)
-                .map(s -> new WrappedGTFSEntity<>(source.id, s))
+                .map(fs.feed.stops::get)
+                .map(s -> new WrappedGTFSEntity<>(fs.id, s))
                 .collect(Collectors.toList());
     }
 
@@ -138,24 +139,26 @@ public class StopFetcher {
             return 0L;
         }
 
-        FeedSource source = ApiMain.getFeedSource(pattern.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        if (fs == null) return null;
 
-        return source.feed.getOrderedStopListForTrip(pattern.entity.associatedTrips.get(0))
+        return fs.feed.getOrderedStopListForTrip(pattern.entity.associatedTrips.get(0))
                 .stream().count();
     }
 
     public static List<WrappedGTFSEntity<Stop>> fromFeed(DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource source = ApiMain.getFeedSource(fi.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(fi.feedUniqueId);
+        if (fs == null) return null;
 
-        Collection<Stop> stops = source.feed.stops.values();
+        Collection<Stop> stops = fs.feed.stops.values();
         List<String> stopIds = env.getArgument("stop_id");
 
         if (stopIds != null) {
             return stopIds.stream()
-                    .filter(source.feed.stops::containsKey)
-                    .map(source.feed.stops::get)
-                    .map(s -> new WrappedGTFSEntity<>(source.id, s))
+                    .filter(fs.feed.stops::containsKey)
+                    .map(fs.feed.stops::get)
+                    .map(s -> new WrappedGTFSEntity<>(fs.id, s))
                     .collect(Collectors.toList());
         }
         // check for bbox query
@@ -165,19 +168,20 @@ public class StopFetcher {
             Coordinate maxCoordinate = new Coordinate(env.getArgument("max_lon"), env.getArgument("max_lat"));
             Coordinate minCoordinate = new Coordinate(env.getArgument("min_lon"), env.getArgument("min_lat"));
             Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
-            stops = source.stopIndex.query(searchEnvelope);
+            stops = fs.stopIndex.query(searchEnvelope);
         }
 
         return stops.stream()
-                .map(s -> new WrappedGTFSEntity<>(source.id, s))
+                .map(s -> new WrappedGTFSEntity<>(fs.id, s))
                 .collect(Collectors.toList());
     }
 
     public static Long fromFeedCount(DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource source = ApiMain.getFeedSource(fi.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSource(fi.feedUniqueId);
+        if (fs == null) return null;
 
-        Collection<Stop> stops = source.feed.stops.values();
+        Collection<Stop> stops = fs.feed.stops.values();
 
         // check for bbox query
         if(argumentDefined(env, "min_lat") && argumentDefined(env, "max_lat") &&
@@ -186,7 +190,7 @@ public class StopFetcher {
             Coordinate maxCoordinate = new Coordinate(env.getArgument("max_lon"), env.getArgument("max_lat"));
             Coordinate minCoordinate = new Coordinate(env.getArgument("min_lon"), env.getArgument("min_lat"));
             Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
-            stops = source.stopIndex.query(searchEnvelope);
+            stops = fs.stopIndex.query(searchEnvelope);
         }
 
         return stops.stream().count();

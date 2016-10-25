@@ -35,7 +35,7 @@ public class StopTimeFetcher {
         Collection<FeedSource> feeds;
 
         List<String> feedId = (List<String>) env.getArgument("feed_id");
-        feeds = feedId.stream().map(ApiMain::getFeedSource).collect(Collectors.toList());
+        feeds = ApiMain.getFeedSources(feedId);
 
         List<WrappedGTFSEntity<StopTime>> stopTimes = new ArrayList<>();
 
@@ -64,6 +64,8 @@ public class StopTimeFetcher {
     public static List<WrappedGTFSEntity<StopTime>> fromTrip(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
         FeedSource fs = ApiMain.getFeedSource(trip.feedUniqueId);
+        if (fs == null) return null;
+
         List<String> stopIds = env.getArgument("stop_id");
 
         // get stop_times in order
@@ -84,6 +86,7 @@ public class StopTimeFetcher {
     public static List<WrappedGTFSEntity<StopTime>> fromStop (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) env.getSource();
         FeedSource fs = ApiMain.getFeedSource(stop.feedUniqueId);
+        if (fs == null) return null;
 
         String d = env.getArgument("date");
         Long from = env.getArgument("from");

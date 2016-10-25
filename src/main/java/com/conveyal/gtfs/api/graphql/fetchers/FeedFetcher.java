@@ -15,9 +15,8 @@ import java.util.stream.Collectors;
  */
 public class FeedFetcher {
     public static List<WrappedGTFSEntity<FeedInfo>> apex(DataFetchingEnvironment environment) {
-        List<String> feedIds = environment.getArgument("feed_id");
-        return feedIds.stream()
-                .map(ApiMain::getFeedSource)
+        List<String> feedId = environment.getArgument("feed_id");
+        return ApiMain.getFeedSources(feedId).stream()
                 .map(fs -> {
                     FeedInfo ret;
                     if (fs.feed.feedInfo.size() > 0) ret = fs.feed.feedInfo.values().iterator().next();
@@ -39,7 +38,9 @@ public class FeedFetcher {
 
     public static Geometry getMergedBuffer(DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> feedInfo = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource feed = ApiMain.getFeedSource(feedInfo.feedUniqueId);
-        return feed.feed.getMergedBuffers();
+        FeedSource fs = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        if (fs == null) return null;
+
+        return fs.feed.getMergedBuffers();
     }
 }

@@ -12,10 +12,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,8 +106,16 @@ public class ApiMain {
     public static FeedSource getFeedSource (String id) {
         try {
             return feedSources.get(id);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+        } catch (UncheckedExecutionException | ExecutionException e) {
+//            throw new RuntimeException(e);
+            return null;
         }
+    }
+
+    public static List<FeedSource> getFeedSources (List<String> feedIds) {
+        return feedIds.stream()
+                .map(ApiMain::getFeedSource)
+                .filter(fs -> fs != null)
+                .collect(Collectors.toList());
     }
 }
