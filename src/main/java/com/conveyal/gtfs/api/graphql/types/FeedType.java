@@ -54,6 +54,7 @@ public class FeedType {
                 .field(newFieldDefinition()
                         .name("stops")
                         .type(new GraphQLList(new GraphQLTypeReference("stop")))
+                        .argument(multiStringArg("stop_id"))
                         .dataFetcher(StopFetcher::fromFeed)
                         .build()
                 )

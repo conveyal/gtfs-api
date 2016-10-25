@@ -149,7 +149,15 @@ public class StopFetcher {
         FeedSource source = ApiMain.getFeedSource(fi.feedUniqueId);
 
         Collection<Stop> stops = source.feed.stops.values();
+        List<String> stopIds = env.getArgument("stop_id");
 
+        if (stopIds != null) {
+            return stopIds.stream()
+                    .filter(source.feed.stops::containsKey)
+                    .map(source.feed.stops::get)
+                    .map(s -> new WrappedGTFSEntity<>(source.id, s))
+                    .collect(Collectors.toList());
+        }
         // check for bbox query
         if(argumentDefined(env, "min_lat") && argumentDefined(env, "max_lat") &&
                 argumentDefined(env, "min_lon") && argumentDefined(env, "max_lon")) {
