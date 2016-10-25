@@ -41,38 +41,38 @@ public class StopFetcher {
         List<WrappedGTFSEntity<Stop>> stops = new ArrayList<>();
 
         // TODO: clear up possible scope issues feed and stop IDs
-        for (FeedSource feed : feeds) {
+        for (FeedSource fs : feeds) {
             if (args.get("stop_id") != null) {
                 List<String> stopId = (List<String>) args.get("stop_id");
                 stopId.stream()
-                        .filter(feed.feed.stops::containsKey)
-                        .map(feed.feed.stops::get)
-                        .map(s -> new WrappedGTFSEntity(feed.id, s))
+                        .filter(id -> id != null && fs.feed.stops.containsKey(id))
+                        .map(fs.feed.stops::get)
+                        .map(s -> new WrappedGTFSEntity(fs.id, s))
                         .forEach(stops::add);
             }
             // TODO: should pattern pre-empt route or should they operate together?
             else if (args.get("pattern_id") != null) {
                 List<String> patternId = (List<String>) args.get("pattern_id");
 
-                feed.feed.patterns.values().stream()
+                fs.feed.patterns.values().stream()
                         .filter(p -> patternId.contains(p.pattern_id))
-                        .map(p -> feed.feed.getOrderedStopListForTrip(p.associatedTrips.get(0)))
+                        .map(p -> fs.feed.getOrderedStopListForTrip(p.associatedTrips.get(0)))
                         .flatMap(List::stream)
-                        .map(feed.feed.stops::get)
+                        .map(fs.feed.stops::get)
                         .distinct()
-                        .map(stop -> new WrappedGTFSEntity(feed.id, stop))
+                        .map(stop -> new WrappedGTFSEntity(fs.id, stop))
                         .forEach(stops::add);
             }
             else if (args.get("route_id") != null) {
                 List<String> routeId = (List<String>) args.get("route_id");
 
-                feed.feed.patterns.values().stream()
+                fs.feed.patterns.values().stream()
                         .filter(p -> routeId.contains(p.route_id))
-                        .map(p -> feed.feed.getOrderedStopListForTrip(p.associatedTrips.get(0)))
+                        .map(p -> fs.feed.getOrderedStopListForTrip(p.associatedTrips.get(0)))
                         .flatMap(List::stream)
-                        .map(feed.feed.stops::get)
+                        .map(fs.feed.stops::get)
                         .distinct()
-                        .map(stop -> new WrappedGTFSEntity(feed.id, stop))
+                        .map(stop -> new WrappedGTFSEntity(fs.id, stop))
                         .forEach(stops::add);
             }
             else {
@@ -84,9 +84,9 @@ public class StopFetcher {
                     Coordinate latLng = new Coordinate(lon, lat);
                     Envelope searchEnvelope = GeomUtil.getBoundingBox(latLng, radius);
 
-                    List<Stop> results = feed.stopIndex.query(searchEnvelope);
+                    List<Stop> results = fs.stopIndex.query(searchEnvelope);
                     results.stream()
-                            .map(s -> new WrappedGTFSEntity(feed.id, s))
+                            .map(s -> new WrappedGTFSEntity(fs.id, s))
                             .forEach(stops::add);
                 }
                 // get stops by bounding box
@@ -96,15 +96,15 @@ public class StopFetcher {
                     Coordinate minCoordinate = new Coordinate((Double) args.get("min_lon"), (Double) args.get("min_lat"));
                     Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
 
-                    List<Stop> results = feed.stopIndex.query(searchEnvelope);
+                    List<Stop> results = fs.stopIndex.query(searchEnvelope);
                     results.stream()
-                            .map(s -> new WrappedGTFSEntity(feed.id, s))
+                            .map(s -> new WrappedGTFSEntity(fs.id, s))
                             .forEach(stops::add);
                 }
                 // get all
                 else {
-                    feed.feed.stops.values().stream()
-                            .map(s -> new WrappedGTFSEntity(feed.id, s))
+                    fs.feed.stops.values().stream()
+                            .map(s -> new WrappedGTFSEntity(fs.id, s))
                             .forEach(stops::add);
                 }
             }
@@ -156,7 +156,7 @@ public class StopFetcher {
 
         if (stopIds != null) {
             return stopIds.stream()
-                    .filter(fs.feed.stops::containsKey)
+                    .filter(id -> id != null && fs.feed.stops.containsKey(id))
                     .map(fs.feed.stops::get)
                     .map(s -> new WrappedGTFSEntity<>(fs.id, s))
                     .collect(Collectors.toList());
