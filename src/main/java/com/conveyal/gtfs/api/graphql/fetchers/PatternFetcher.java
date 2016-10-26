@@ -57,7 +57,7 @@ public class PatternFetcher {
 
                 List<Pattern> results = fs.routeIndex.query(searchEnvelope);
                 results.stream()
-                        .map(s -> new WrappedGTFSEntity(fs.id, s))
+                        .map(pattern -> new WrappedGTFSEntity(fs.id, pattern))
                         .forEach(patterns::add);
             }
             // get patterns by bounding box
@@ -67,9 +67,10 @@ public class PatternFetcher {
                 Coordinate minCoordinate = new Coordinate((Double) args.get("min_lon"), (Double) args.get("min_lat"));
                 Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
 
-                List<Pattern> results = fs.routeIndex.query(searchEnvelope);
+                List<Pattern> results = (List<Pattern>) fs.routeIndex.query(searchEnvelope);
                 results.stream()
-                        .map(s -> new WrappedGTFSEntity(fs.id, s))
+                        .filter(p -> p != null)
+                        .map(pattern -> new WrappedGTFSEntity(fs.id, pattern))
                         .forEach(patterns::add);
             }
         }

@@ -37,7 +37,7 @@ public class PatternType {
                         .name("route")
                         .description("Route that pattern operates along")
                         .dataFetcher(RouteFetcher::fromPattern)
-                        .type(new GraphQLList(new GraphQLTypeReference("route")))
+                        .type(new GraphQLTypeReference("route"))
                         .build()
                 )
                 .field(newFieldDefinition()
