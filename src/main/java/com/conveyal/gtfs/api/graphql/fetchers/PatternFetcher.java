@@ -51,6 +51,7 @@ public class PatternFetcher {
 
         List<String> stopIds = env.getArgument("stop_id");
         List<String> patternId = env.getArgument("pattern_id");
+        Long limit = env.getArgument("limit");
 
         List<WrappedGTFSEntity<Pattern>> patterns = fs.feed.patterns.values().stream()
                 .filter(p -> p.route_id.equals(route.entity.route_id))
@@ -66,7 +67,9 @@ public class PatternFetcher {
                     .filter(p -> !Collections.disjoint(p.entity.orderedStops, stopIds)) // disjoint returns true if no elements in common
                     .collect(Collectors.toList());
         }
-
+        if (limit != null) {
+            return patterns.stream().limit(limit).collect(Collectors.toList());
+        }
         return patterns;
     }
 

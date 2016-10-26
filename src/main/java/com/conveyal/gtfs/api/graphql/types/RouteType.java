@@ -55,6 +55,7 @@ public class RouteType {
                         .name("patterns")
                         .argument(multiStringArg("stop_id"))
                         .argument(multiStringArg("pattern_id"))
+                        .argument(longArg("limit"))
                         .dataFetcher(PatternFetcher::fromRoute)
                         .build()
                 )
