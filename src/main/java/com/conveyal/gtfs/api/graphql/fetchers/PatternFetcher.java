@@ -3,41 +3,73 @@ package com.conveyal.gtfs.api.graphql.fetchers;
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.api.models.FeedSource;
+import com.conveyal.gtfs.api.util.GeomUtil;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Trip;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
 import graphql.schema.DataFetchingEnvironment;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.conveyal.gtfs.api.util.GraphQLUtil.argumentDefined;
 
 /**
  *
  * Created by matthewc on 3/9/16.
  */
 public class PatternFetcher {
+    private static final Double DEFAULT_RADIUS = 1.0; // default 1 km search radius
+
     public static List<WrappedGTFSEntity<Pattern>> apex(DataFetchingEnvironment env) {
         Collection<FeedSource> feeds;
 
         List<String> feedId = (List<String>) env.getArgument("feed_id");
         feeds = ApiMain.getFeedSources(feedId);
-
+        Map<String, Object> args = env.getArguments();
         List<WrappedGTFSEntity<Pattern>> patterns = new ArrayList<>();
 
-        for (FeedSource feed : feeds) {
+        for (FeedSource fs : feeds) {
             if (env.getArgument("pattern_id") != null) {
                 List<String> patternId = (List<String>) env.getArgument("pattern_id");
                 patternId.stream()
-                        .filter(feed.feed.patterns::containsKey)
-                        .map(feed.feed.patterns::get)
-                        .map(pattern -> new WrappedGTFSEntity(feed.id, pattern))
+                        .filter(fs.feed.patterns::containsKey)
+                        .map(fs.feed.patterns::get)
+                        .map(pattern -> new WrappedGTFSEntity(fs.id, pattern))
                         .forEach(patterns::add);
             }
             else if (env.getArgument("route_id") != null) {
                 List<String> routeId = (List<String>) env.getArgument("route_id");
-                feed.feed.patterns.values().stream()
+                fs.feed.patterns.values().stream()
                         .filter(p -> routeId.contains(p.route_id))
-                        .map(pattern -> new WrappedGTFSEntity(feed.id, pattern))
+                        .map(pattern -> new WrappedGTFSEntity(fs.id, pattern))
+                        .forEach(patterns::add);
+            }
+            // get patterns by lat/lon/radius
+            else if (argumentDefined(env, "lat") && argumentDefined(env, "lon")) {
+                Double lat = (Double) args.get("lat");
+                Double lon = (Double) args.get("lon");
+                Double radius = args.get("radius") == null ? DEFAULT_RADIUS : (Double) args.get("radius");
+                Coordinate latLng = new Coordinate(lon, lat);
+                Envelope searchEnvelope = GeomUtil.getBoundingBox(latLng, radius);
+
+                List<Pattern> results = fs.routeIndex.query(searchEnvelope);
+                results.stream()
+                        .map(s -> new WrappedGTFSEntity(fs.id, s))
+                        .forEach(patterns::add);
+            }
+            // get patterns by bounding box
+            else if (argumentDefined(env, "min_lat") && argumentDefined(env, "max_lat") &&
+                    argumentDefined(env, "min_lon") && argumentDefined(env, "max_lon")) {
+                Coordinate maxCoordinate = new Coordinate((Double) args.get("max_lon"), (Double) args.get("max_lat"));
+                Coordinate minCoordinate = new Coordinate((Double) args.get("min_lon"), (Double) args.get("min_lat"));
+                Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
+
+                List<Pattern> results = fs.routeIndex.query(searchEnvelope);
+                results.stream()
+                        .map(s -> new WrappedGTFSEntity(fs.id, s))
                         .forEach(patterns::add);
             }
         }
