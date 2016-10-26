@@ -73,6 +73,7 @@ public class GraphQLGtfsSchema {
             // TODO: determine if there's a better way to get at the refs for patterns, trips, and stopTimes than injecting them at the root.
             .field(newFieldDefinition()
                     .name("patterns")
+                    .type(new GraphQLList(patternType))
                     .argument(multiStringArg("feed_id"))
                     .argument(multiStringArg("pattern_id"))
                     .argument(floatArg("lat"))
@@ -83,7 +84,6 @@ public class GraphQLGtfsSchema {
                     .argument(floatArg("min_lat"))
                     .argument(floatArg("min_lon"))
                     .dataFetcher(PatternFetcher::apex)
-                    .type(new GraphQLList(patternType))
                     .build()
             )
             .field(newFieldDefinition()

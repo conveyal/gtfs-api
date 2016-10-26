@@ -2,11 +2,13 @@ package com.conveyal.gtfs.api.util;
 
 import com.conveyal.gtfs.api.graphql.GeoJsonCoercing;
 import com.conveyal.gtfs.api.graphql.WrappedEntityFieldFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.FeedFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLScalarType;
+import graphql.schema.GraphQLTypeReference;
 
 import static graphql.Scalars.*;
 import static graphql.schema.GraphQLArgument.newArgument;
@@ -42,6 +44,15 @@ public class GraphQLUtil {
                 .name(name)
                 .type(GraphQLFloat)
                 .dataFetcher(new WrappedEntityFieldFetcher(name))
+                .build();
+    }
+
+    public static GraphQLFieldDefinition feed () {
+        return newFieldDefinition()
+                .name("feed")
+                .description("Containing feed")
+                .dataFetcher(FeedFetcher::forWrappedGtfsEntity)
+                .type(new GraphQLTypeReference("feed"))
                 .build();
     }
 

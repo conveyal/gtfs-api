@@ -17,23 +17,25 @@ public class FeedFetcher {
     public static List<WrappedGTFSEntity<FeedInfo>> apex(DataFetchingEnvironment environment) {
         List<String> feedId = environment.getArgument("feed_id");
         return ApiMain.getFeedSources(feedId).stream()
-                .map(fs -> {
-                    FeedInfo ret;
-                    if (fs.feed.feedInfo.size() > 0) ret = fs.feed.feedInfo.values().iterator().next();
-                    else {
-                        ret = new FeedInfo();
-                    }
-
-                    // NONE is a special value used in GTFS Lib feed info
-                    if (ret.feed_id == null || "NONE".equals(ret.feed_id)) {
-                        ret = ret.clone();
-                        ret.feed_id = fs.feed.feedId;
-                    }
-
-                    return new WrappedGTFSEntity<>(fs.id, ret);
-                })
+                .map(fs -> getFeedInfo(fs))
                 .collect(Collectors.toList());
 
+    }
+
+    private static WrappedGTFSEntity<FeedInfo> getFeedInfo(FeedSource fs) {
+        FeedInfo ret;
+        if (fs.feed.feedInfo.size() > 0) ret = fs.feed.feedInfo.values().iterator().next();
+        else {
+            ret = new FeedInfo();
+        }
+
+        // NONE is a special value used in GTFS Lib feed info
+        if (ret.feed_id == null || "NONE".equals(ret.feed_id)) {
+            ret = ret.clone();
+            ret.feed_id = fs.feed.feedId;
+        }
+
+        return new WrappedGTFSEntity<>(fs.id, ret);
     }
 
     public static Geometry getMergedBuffer(DataFetchingEnvironment env) {
@@ -42,5 +44,13 @@ public class FeedFetcher {
         if (fs == null) return null;
 
         return fs.feed.getMergedBuffers();
+    }
+
+    public static WrappedGTFSEntity<FeedInfo> forWrappedGtfsEntity (DataFetchingEnvironment env) {
+        WrappedGTFSEntity<FeedInfo> feedInfo = (WrappedGTFSEntity<FeedInfo>) env.getSource();
+        FeedSource fs = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        if (fs == null) return null;
+
+        return getFeedInfo(fs);
     }
 }

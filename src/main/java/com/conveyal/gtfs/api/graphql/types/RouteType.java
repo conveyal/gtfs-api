@@ -1,5 +1,6 @@
 package com.conveyal.gtfs.api.graphql.types;
 
+import com.conveyal.gtfs.api.graphql.fetchers.FeedFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.PatternFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.StatFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
@@ -38,6 +39,7 @@ public class RouteType {
                 // TODO route_type as enum
                 .field(string("route_color"))
                 .field(string("route_text_color"))
+                .field(feed())
                 .field(newFieldDefinition()
                         .type(new GraphQLList(new GraphQLTypeReference("trip")))
                         .name("trips")

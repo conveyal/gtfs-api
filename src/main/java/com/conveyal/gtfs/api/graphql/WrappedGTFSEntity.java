@@ -1,7 +1,5 @@
 package com.conveyal.gtfs.api.graphql;
 
-import com.conveyal.gtfs.model.Entity;
-
 /**
  * Wraps a GTFS entity with the unique ID of the feed it came from
  */

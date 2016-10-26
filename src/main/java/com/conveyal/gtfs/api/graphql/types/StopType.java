@@ -57,6 +57,7 @@ public class StopType {
                 .field(string("zone_id"))
                 .field(string("stop_url"))
                 .field(string("stop_timezone"))
+                .field(feed())
                 .field(newFieldDefinition()
                         .name("stop_times")
                         .description("The list of stop_times for a stop")

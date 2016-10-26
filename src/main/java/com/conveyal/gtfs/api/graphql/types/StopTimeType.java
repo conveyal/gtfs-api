@@ -21,6 +21,7 @@ public class StopTimeType {
                 .field(string("stop_id"))
                 .field(string("stop_headsign"))
                 .field(doublee("shape_dist_traveled"))
+                .field(feed())
                 .field(newFieldDefinition()
                         .name("trip")
                         .type(new GraphQLTypeReference("trip"))

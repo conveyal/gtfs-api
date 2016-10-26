@@ -33,6 +33,7 @@ public class PatternType {
                 .field(string("pattern_id"))
                 .field(string("name"))
                 .field(string("route_id"))
+                .field(feed())
                 .field(newFieldDefinition()
                         .name("route")
                         .description("Route that pattern operates along")

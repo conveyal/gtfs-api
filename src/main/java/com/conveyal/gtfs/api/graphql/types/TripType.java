@@ -7,9 +7,7 @@ import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
 
-import static com.conveyal.gtfs.api.util.GraphQLUtil.intt;
-import static com.conveyal.gtfs.api.util.GraphQLUtil.multiStringArg;
-import static com.conveyal.gtfs.api.util.GraphQLUtil.string;
+import static com.conveyal.gtfs.api.util.GraphQLUtil.*;
 import static graphql.Scalars.GraphQLInt;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
@@ -27,6 +25,7 @@ public class TripType {
                 .field(string("block_id"))
                 .field(intt("direction_id"))
                 .field(string("route_id"))
+                .field(feed())
                 .field(newFieldDefinition()
                         .name("pattern")
                         .type(new GraphQLTypeReference("pattern"))
