@@ -71,6 +71,7 @@ public class RoutesController {
             Coordinate minCoordinate = new Coordinate(Double.valueOf(req.queryParams("min_lon")), Double.valueOf(req.queryParams("min_lat")));
             Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
             for (String feedId : feeds) {
+                // TODO: these are actually patterns being returned, NOT routes
                 List<Route> searchResults = ApiMain.getFeedSource(feedId).routeIndex.query(searchEnvelope);
                 routes.addAll(searchResults);
             }
