@@ -106,8 +106,7 @@ public class ApiMain {
     public static FeedSource getFeedSource (String id) {
         try {
             return feedSources.get(id);
-        } catch (UncheckedExecutionException | ExecutionException e) {
-//            throw new RuntimeException(e);
+        } catch (Exception e) {
             return null;
         }
     }
