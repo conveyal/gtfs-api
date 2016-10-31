@@ -91,7 +91,7 @@ public class RouteFetcher {
 
         if (routeIds != null) {
             return routeIds.stream()
-                    .filter(id -> id != null && fs.feed.stops.containsKey(id))
+                    .filter(id -> id != null && fs.feed.routes.containsKey(id))
                     .map(fs.feed.routes::get)
                     .map(r -> new WrappedGTFSEntity<>(fs.id, r))
                     .collect(Collectors.toList());
