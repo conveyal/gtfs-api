@@ -91,14 +91,24 @@ public class FeedSource {
         this.stopIndex = new STRtree();
         this.stopTree = new ConcurrentSuffixTree<Stop>( new DefaultCharArrayNodeFactory() );
         for (Stop stop : this.feed.stops.values()){
-            // spatial
+            // spatial index
             Coordinate stopCoords = new Coordinate(stop.stop_lon, stop.stop_lat);
             Envelope stopEnvelope = new Envelope(stopCoords);
             this.stopIndex.insert(stopEnvelope, stop);
 
-            // string
+            // string index
             // TODO: consider concatenating stop_code and stop_name
-            this.stopTree.put(stop.stop_name.toUpperCase(), stop);
+            String stopName;
+            if (stop.stop_name != null) {
+                stopName = stop.stop_name.toUpperCase();
+            }
+            else if (stop.stop_id != null) {
+                stopName = stop.stop_id.toUpperCase();
+            }
+            else {
+                stopName = "";
+            }
+            this.stopTree.put(stopName, stop);
             String stop_code;
             if (stop.stop_code != null){
                 stop_code = stop.stop_code;
