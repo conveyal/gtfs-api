@@ -66,7 +66,8 @@ public class ApiMain {
         initialize(gtfsCache);
     }
 
-    public static void initialize (GTFSCache gtfsCache) {
+    public static void initialize (GTFSCache sourceGtfsCache) {
+        gtfsCache = sourceGtfsCache;
         // wrap the GTFS cache in a feed source cache
         feedSources = CacheBuilder.newBuilder()
                 .maximumSize(15)
