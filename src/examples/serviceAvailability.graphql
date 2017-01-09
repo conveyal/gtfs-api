@@ -1,0 +1,27 @@
+query serviceAvailabilityQuery($feedId: [String], $date: String, $begin: Long, $end: Long, $lat: Float, $lon: Float, $radius: Float) {
+  stops(feed_id: $feedId, lat: $lat, lon: $lon, radius: $radius) {
+    stop_name
+    stop_id
+    stop_times(date: $date, from: $begin, to: $end) {
+      arrival_time
+      departure_time
+      trip {
+        trip_id
+        pattern {
+          pattern_id
+        }
+      }
+    }
+    stop_lat
+    stop_lon
+    stop_id
+    routes {
+      route_id
+      route_short_name
+      patterns {
+        name
+        pattern_id
+      }
+    }
+  }
+}

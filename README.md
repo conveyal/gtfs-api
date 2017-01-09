@@ -27,9 +27,46 @@ To use the GraphQL endpoint, install the GraphiQL app
 
 or use the [ChromeiQL extension](https://chrome.google.com/webstore/detail/chromeiql/fkkiamalmpiidkljmicmjfbieiclmeij).
 
+### The basics
+
+For the unitiated, GraphQL is a flexible alternative to REST, whereby clients can request only the data elements
+they need. It also permits requests clients to request data that is nested according to relationships between types.
+
+As an example in the context of GTFS, if we're looking for all of the routes that serve a specific stop,
+we might construct the following query:
+
+```
+query routesForStopQuery($feedId: [String], $stopId: [String]) {
+  stops(feed_id: $feedId, stop_id: $stopId) {
+    stop_name
+    stop_id
+    stop_lat
+    stop_lon
+    routes {
+      route_id
+      route_short_name
+      patterns {
+        name
+        pattern_id
+      }
+    }
+  }
+}
+```
+
+The above request specifies a couple of variables (`feedId`, which is always required, and `stopId` for the specific stop(s))
+as well as a list of fields the client would like back (including `stop_name`, `stop_id`, and `stop_lat`). The last item
+at this level in the query is `routes`, which will return all of the routes that serve the containing stop. Underneath routes
+are `patterns`, which in this context means all of the various patterns (unique stop sequences) for that route. We could
+even travel one (or more) level deeper and ask for all of the stops for each pattern.
+ 
+The various permutations of these fields and types are all documented in [schema.graphql](src/docs/schema.graphql).
+Visiting the root GraphQL endpoint for `gtfs-api` (e.g., [http://localhost:4567](http://localhost:4567)) will return
+the schema for the active version of `gtfs-api`.
+
 ### Sample GraphQL queries
 
-You can find some sample GraphQL queries [here](https://github.com/conveyal/scenario-editor/blob/master/lib/graphql/query.js).
+You can find some sample GraphQL queries [here](https://github.com/conveyal/scenario-editor/blob/master/lib/graphql/query.js) or in [examples](src/examples).
 
 ## REST Endpoints
 
