@@ -26,6 +26,7 @@ public class GraphQLController {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphQLController.class);
+    private static final GraphQL GRAPHQL = new GraphQL(GraphQLGtfsSchema.schema);
 
     public static Object get (Request req, Response res) {
         Map<String, Object> variables = null;
@@ -33,7 +34,7 @@ public class GraphQLController {
         String query = req.queryParams("query");
 
         if (vars == null && query == null) {
-            return new GraphQL(GraphQLGtfsSchema.schema).execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
+            return GRAPHQL.execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
         }
         try {
             variables = mapper.readValue(vars, new TypeReference<Map<String, Object>>() {
@@ -43,7 +44,7 @@ public class GraphQLController {
             halt(404, "Malformed JSON");
         }
 
-        ExecutionResult er = new GraphQL(GraphQLGtfsSchema.schema).execute(query, null, null, variables);
+        ExecutionResult er = GRAPHQL.execute(query, null, null, variables);
         List<GraphQLError> errs = er.getErrors();
         if (!errs.isEmpty()) {
             res.status(400);
@@ -55,6 +56,6 @@ public class GraphQLController {
     }
 
     public static Object getSchema (Request req, Response res) {
-        return new GraphQL(GraphQLGtfsSchema.schema).execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
+        return GRAPHQL.execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
     }
 }
