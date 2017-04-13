@@ -1,15 +1,11 @@
 package com.conveyal.gtfs.api.models;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 //import com.googlecode.concurrenttrees.radix.ConcurrentRadixTree;
 //import com.googlecode.concurrenttrees.radix.RadixTree;
 import com.conveyal.gtfs.stats.FeedStats;
-import com.conveyal.gtfs.stats.PatternStats;
-import com.conveyal.gtfs.stats.RouteStats;
-import com.conveyal.gtfs.stats.StopStats;
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory;
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree;
 import com.googlecode.concurrenttrees.suffix.SuffixTree;
@@ -19,9 +15,7 @@ import com.vividsolutions.jts.index.strtree.STRtree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -89,34 +83,38 @@ public class FeedSource {
 
         // Initialize and build stop radix tree and spatial index
         this.stopIndex = new STRtree();
-        this.stopTree = new ConcurrentSuffixTree<Stop>( new DefaultCharArrayNodeFactory() );
+        this.stopTree = new ConcurrentSuffixTree<>( new DefaultCharArrayNodeFactory() );
         for (Stop stop : this.feed.stops.values()){
             // spatial index
             Coordinate stopCoords = new Coordinate(stop.stop_lon, stop.stop_lat);
             Envelope stopEnvelope = new Envelope(stopCoords);
             this.stopIndex.insert(stopEnvelope, stop);
 
-            // string index
-            // TODO: consider concatenating stop_code and stop_name
-            String stopName;
+            // add name string to stopTree
+            String stopName = "";
             if (stop.stop_name != null) {
-                stopName = stop.stop_name.toUpperCase();
+                stopName += stop.stop_name.toUpperCase() + " "; // include space to separate stop_id
             }
-            else if (stop.stop_id != null) {
-                stopName = stop.stop_id.toUpperCase();
+
+            // always add stop_id to stopName to ensure that stops with duplicate names are not filtered out
+            if (stop.stop_id != null) {
+                stopName += stop.stop_id.toUpperCase();
             }
-            else {
-                stopName = "";
+            if (!"".equals(stopName)) {
+                this.stopTree.put(stopName, stop);
             }
-            this.stopTree.put(stopName, stop);
-            String stop_code;
+
+            // add stop_code string to stopTree
+            String stop_code = "";
             if (stop.stop_code != null){
                 stop_code = stop.stop_code;
             }
-            else {
+            else if (stop.stop_id != null) {
                 stop_code = stop.stop_id;
             }
-            this.stopTree.put(stop_code.toUpperCase(), stop);
+            if (!"".equals(stop_code)) {
+                this.stopTree.put(stop_code.toUpperCase(), stop);
+            }
         }
         this.stopIndex.build();
 
