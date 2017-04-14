@@ -1,9 +1,11 @@
 package com.conveyal.gtfs.api;
 
+import com.conveyal.gtfs.BaseGTFSCache;
 import com.conveyal.gtfs.GTFSCache;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.api.util.CorsFilter;
+import com.conveyal.gtfs.api.util.FeedSourceCache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -30,8 +32,7 @@ public class ApiMain {
     private static String feedBucket;
     private static String dataDirectory;
     private static String bucketFolder;
-    public static LoadingCache<String, FeedSource> feedSources;
-    private static GTFSCache gtfsCache;
+    private static FeedSourceCache cache;
 
     /** IDs of feed sources this API instance is aware of */
     public static Collection<String> registeredFeedSources;
@@ -61,52 +62,28 @@ public class ApiMain {
         ApiMain.feedBucket = feedBucket;
         ApiMain.dataDirectory = dataDirectory;
         ApiMain.bucketFolder = bucketFolder;
-
-        gtfsCache = new GTFSCache(feedBucket, bucketFolder, new File(dataDirectory));
-        initialize(gtfsCache);
-    }
-
-    public static void initialize (GTFSCache sourceGtfsCache) {
-        gtfsCache = sourceGtfsCache;
-        // wrap the GTFS cache in a feed source cache
-        feedSources = CacheBuilder.newBuilder()
-                .maximumSize(15)
-                .build(new CacheLoader<String, FeedSource>() {
-                    @Override
-                    public FeedSource load(String id) throws Exception {
-                        GTFSFeed feed = gtfsCache.get(id);
-                        if (feed == null) return null;
-                        FeedSource fs = new FeedSource(feed);
-                        fs.id = id;
-                        return fs;
-                    }
-                });
-
-        registeredFeedSources = new ArrayList<>();
+        cache = new FeedSourceCache(feedBucket, bucketFolder, new File(dataDirectory));
     }
 
     /** Register a new feed source with the API */
     public static FeedSource registerFeedSource (String id, File gtfsFile) throws Exception {
-        gtfsCache.put(id, gtfsFile);
-
-        // get the feed source through the loading cache so that it is primed and cached for later
-        FeedSource fs = feedSources.get(id);
+        FeedSource fs = cache.put(id, gtfsFile);
         registeredFeedSources.add(id);
         return fs;
     }
 
     /** Register a new feed source with generated ID. The idGenerator must return the same value when called on the same GTFS feed. */
     public static FeedSource registerFeedSource (Function<GTFSFeed, String> idGenerator, File gtfsFile) throws Exception {
-        GTFSFeed feed = gtfsCache.put(idGenerator, gtfsFile);
-        String id = idGenerator.apply(feed);
+        FeedSource feed = cache.put(idGenerator, gtfsFile);
+        String id = idGenerator.apply(feed.feed);
         registeredFeedSources.add(id);
-        return feedSources.get(id);
+        return feed;
     }
 
     /** convenience function to get a feed source without throwing checked exceptions, for example for use in lambdas */
     public static FeedSource getFeedSource (String id) {
         try {
-            return feedSources.get(id);
+            return cache.get(id);
         } catch (Exception e) {
             return null;
         }
