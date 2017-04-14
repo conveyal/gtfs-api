@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -35,7 +36,7 @@ public class ApiMain {
     private static FeedSourceCache cache;
 
     /** IDs of feed sources this API instance is aware of */
-    public static Collection<String> registeredFeedSources;
+    public static Collection<String> registeredFeedSources = new HashSet<>();
 
     public static final Logger LOG = LoggerFactory.getLogger(ApiMain.class);
     public static void main(String[] args) throws Exception {
@@ -67,17 +68,17 @@ public class ApiMain {
 
     /** Register a new feed source with the API */
     public static FeedSource registerFeedSource (String id, File gtfsFile) throws Exception {
-        FeedSource fs = cache.put(id, gtfsFile);
+        FeedSource feedSource = cache.put(id, gtfsFile);
         registeredFeedSources.add(id);
-        return fs;
+        return feedSource;
     }
 
     /** Register a new feed source with generated ID. The idGenerator must return the same value when called on the same GTFS feed. */
     public static FeedSource registerFeedSource (Function<GTFSFeed, String> idGenerator, File gtfsFile) throws Exception {
-        FeedSource feed = cache.put(idGenerator, gtfsFile);
-        String id = idGenerator.apply(feed.feed);
+        FeedSource feedSource = cache.put(idGenerator, gtfsFile);
+        String id = idGenerator.apply(feedSource.feed);
         registeredFeedSources.add(id);
-        return feed;
+        return feedSource;
     }
 
     /** convenience function to get a feed source without throwing checked exceptions, for example for use in lambdas */
