@@ -1,27 +1,20 @@
 package com.conveyal.gtfs.api;
 
-import com.conveyal.gtfs.BaseGTFSCache;
-import com.conveyal.gtfs.GTFSCache;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.api.util.CorsFilter;
 import com.conveyal.gtfs.api.util.FeedSourceCache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.util.concurrent.UncheckedExecutionException;
+import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +29,7 @@ public class ApiMain {
     private static FeedSourceCache cache;
 
     /** IDs of feed sources this API instance is aware of */
-    public static Collection<String> registeredFeedSources = new HashSet<>();
+    public static ConcurrentHashSet<String> registeredFeedSources = new ConcurrentHashSet<>();
 
     public static final Logger LOG = LoggerFactory.getLogger(ApiMain.class);
     public static void main(String[] args) throws Exception {
@@ -83,10 +76,16 @@ public class ApiMain {
 
     /** convenience function to get a feed source without throwing checked exceptions, for example for use in lambdas */
     public static FeedSource getFeedSource (String id) {
+        Throwable throwable = null;
         try {
             return cache.get(id);
         } catch (Exception e) {
+            throwable = e;
             return null;
+        } finally {
+            if (throwable == null) {
+                registeredFeedSources.add(id);
+            }
         }
     }
 
