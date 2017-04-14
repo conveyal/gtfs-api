@@ -76,17 +76,14 @@ public class ApiMain {
 
     /** convenience function to get a feed source without throwing checked exceptions, for example for use in lambdas */
     public static FeedSource getFeedSource (String id) {
-        Throwable throwable = null;
+        FeedSource f;
         try {
-            return cache.get(id);
+            f = cache.get(id);
         } catch (Exception e) {
-            throwable = e;
             return null;
-        } finally {
-            if (throwable == null) {
-                registeredFeedSources.add(id);
-            }
         }
+        registeredFeedSources.add(id);
+        return f;
     }
 
     public static List<FeedSource> getFeedSources (List<String> feedIds) {
