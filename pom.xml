@@ -6,7 +6,7 @@
 
     <groupId>com.conveyal</groupId>
     <artifactId>gtfs-api</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <version>0.5</version>
 
     <!-- Define where the source code for this project lives -->
     <scm>
