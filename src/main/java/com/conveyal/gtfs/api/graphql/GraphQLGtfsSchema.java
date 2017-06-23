@@ -88,6 +88,7 @@ public class GraphQLGtfsSchema {
             )
             .field(newFieldDefinition()
                     .name("trips")
+                    .argument(multiStringArg("feed_id"))
                     .argument(multiStringArg("trip_id"))
                     .argument(multiStringArg("route_id"))
                     .dataFetcher(TripDataFetcher::apex)
