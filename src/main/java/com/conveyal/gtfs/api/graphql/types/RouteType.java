@@ -37,6 +37,7 @@ public class RouteType {
                 .field(string("route_desc"))
                 .field(string("route_url"))
                 // TODO route_type as enum
+                .field(intt("route_type"))
                 .field(string("route_color"))
                 .field(string("route_text_color"))
                 .field(feed())
