@@ -1,5 +1,6 @@
 package com.conveyal.gtfs.api.graphql.types;
 
+import com.conveyal.gtfs.api.graphql.GraphQLGtfsSchema;
 import com.conveyal.gtfs.api.graphql.fetchers.*;
 import com.sun.corba.se.impl.orbutil.graph.Graph;
 import graphql.schema.GraphQLList;
@@ -13,9 +14,9 @@ import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
 
 /**
- * Created by landon on 10/3/16.
+ * Factory to create a GraphQL type for GTFS routes.
  */
-public class RouteType {
+public abstract class RouteType {
     public static GraphQLObjectType build () {
         // routeStats should be modeled after com.conveyal.gtfs.stats.model.RouteStatistic
         GraphQLObjectType routeStats = newObject()
@@ -42,9 +43,9 @@ public class RouteType {
                 .field(MapFetcher.field("route_text_color"))
                 .field(feed())
                 .field(newFieldDefinition()
-                        .type(new GraphQLList(new GraphQLTypeReference("trip")))
+                        .type(new GraphQLList(GraphQLGtfsSchema.tripType))
                         .name("trips")
-                        .dataFetcher(TripDataFetcher::fromRoute)
+                        .dataFetcher(new JDBCFetcher("trips"))
                         .build()
                 )
                 .field(newFieldDefinition()
@@ -53,29 +54,29 @@ public class RouteType {
                         .dataFetcher(TripDataFetcher::fromRouteCount)
                         .build()
                 )
-                .field(newFieldDefinition()
-                        .type(new GraphQLList(new GraphQLTypeReference("pattern")))
-                        .name("patterns")
-                        .argument(multiStringArg("stop_id"))
-                        .argument(multiStringArg("pattern_id"))
-                        .argument(longArg("limit"))
-                        .dataFetcher(PatternFetcher::fromRoute)
-                        .build()
-                )
-                .field(newFieldDefinition()
-                        .type(GraphQLLong)
-                        .name("pattern_count")
-                        .dataFetcher(PatternFetcher::fromRouteCount)
-                        .build()
-                )
-                .field(newFieldDefinition()
-                        .type(routeStats)
-                        .name("stats")
-                        .argument(stringArg("date"))
-                        .argument(longArg("from"))
-                        .argument(longArg("to"))
-                        .dataFetcher(StatFetcher::fromRoute)
-                        .build()
-                )
+//                .field(newFieldDefinition()
+//                        .type(new GraphQLList(new GraphQLTypeReference("pattern")))
+//                        .name("patterns")
+//                        .argument(multiStringArg("stop_id"))
+//                        .argument(multiStringArg("pattern_id"))
+//                        .argument(longArg("limit"))
+//                        .dataFetcher(PatternFetcher::fromRoute)
+//                        .build()
+//                )
+//                .field(newFieldDefinition()
+//                        .type(GraphQLLong)
+//                        .name("pattern_count")
+//                        .dataFetcher(PatternFetcher::fromRouteCount)
+//                        .build()
+//                )
+//                .field(newFieldDefinition()
+//                        .type(routeStats)
+//                        .name("stats")
+//                        .argument(stringArg("date"))
+//                        .argument(longArg("from"))
+//                        .argument(longArg("to"))
+//                        .dataFetcher(StatFetcher::fromRoute)
+//                        .build()
+//                )
                 .build();
     }}

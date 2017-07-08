@@ -1,9 +1,7 @@
 package com.conveyal.gtfs.api.graphql.types;
 
-import com.conveyal.gtfs.api.graphql.fetchers.MapFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.PatternFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.StopTimeFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
+import com.conveyal.gtfs.api.graphql.GraphQLGtfsSchema;
+import com.conveyal.gtfs.api.graphql.fetchers.*;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
@@ -14,9 +12,9 @@ import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
 
 /**
- * Created by landon on 10/3/16.
+ * Factory to create a GraphQL type for GTFS trips.
  */
-public class TripType {
+public abstract class TripType {
     public static GraphQLObjectType build () {
         return newObject()
                 .name("trip")
@@ -29,15 +27,15 @@ public class TripType {
                 .field(feed())
                 .field(newFieldDefinition()
                         .name("pattern")
-                        .type(new GraphQLTypeReference("pattern"))
+                        .type(GraphQLGtfsSchema.patternType)
                         .dataFetcher(PatternFetcher::fromTrip)
                         .build()
                 )
                 .field(newFieldDefinition()
                         .name("stop_times")
-                        .type(new GraphQLList(new GraphQLTypeReference("stopTime")))
+                        .type(new GraphQLTypeReference("stopTime")) // forward reference
                         .argument(multiStringArg("stop_id"))
-                        .dataFetcher(StopTimeFetcher::fromTrip)
+                        .dataFetcher(new JDBCFetcher("stop_times"))
                         .build()
                 )
                 // some pseudo-fields to reduce the amount of data that has to be fetched

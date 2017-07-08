@@ -6,8 +6,11 @@ import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
+import com.conveyal.gtfs.storage.SqlLibrary;
+import com.sun.media.jai.util.DataBufferUtils;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
+import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,49 +50,61 @@ public class JDBCFetcher implements DataFetcher {
     // from a Map<String, Object>.
     // But what are the internal GraphQL objects, i.e. what does an ExecutionResult return? Are they Map<String, Object>?
 
+
+    // TODO another parameter for where clause key in the parent-object
     @Override
-    public List<Map<String, Object>> get(DataFetchingEnvironment environment) {
+    public List<Map<String, Object>> get (DataFetchingEnvironment environment) {
         List<Map<String, Object>> results = new ArrayList<>();
-        List<String> feedIds = environment.getArgument("feed_id");
-        for (String feedId : feedIds) {
-            StringBuilder sqlBuilder = new StringBuilder();
-            sqlBuilder.append(String.format("select * from %s.%s", feedId, tableName));
-            List<String> conditions = new ArrayList<>();
+        // Apparently you can't get the arguments from the parent - how do you have arguments on sub-fields?
+        // String namespace = environment.getArgument("namespace"); // This is going to be the unique prefix, not the feedId in the usual sense
+        // This DataFetcher only makes sense when the enclosing parent object is a feed or something in a feed.
+        // So it should always be represented as a map with a namespace key.
+        Map<String, Object> map = (Map<String, Object>)environment.getSource();
+        String namespace = (String) map.get("namespace");
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append(String.format("select * from %s.%s", namespace, tableName));
+        List<String> conditions = new ArrayList<>();
+        if (environment.getSource() instanceof Entity) {
             Entity source = (Entity) environment.getSource();
             if (source != null) {
                 conditions.add(String.join(" = ", source.getId(), source.getId())); // FIXME should be getting field name, not contents
             }
-            for (String key : environment.getArguments().keySet()) {
-                if ("feed_id".equals(key)) continue;
-                List<String> values = (List<String>) environment.getArguments().get(key);
-                if (values != null && !values.isEmpty()) conditions.add(makeInClause(key, values));
-            }
-            if ( ! conditions.isEmpty()) {
-                sqlBuilder.append(" where ");
-                sqlBuilder.append(String.join(" and ", conditions));
-            }
-            try {
-                Statement statement = GraphQLMain.connection.createStatement();
-                LOG.info("SQL: {}", sqlBuilder.toString());
-                if (statement.execute(sqlBuilder.toString())) {
-                    ResultSet resultSet = statement.getResultSet();
-                    ResultSetMetaData meta = resultSet.getMetaData();
-                    int nColumns = meta.getColumnCount();
-                    // Iterate over result rows
-                    while (resultSet.next()) {
-                        // Create a Map to hold the contents of this row, injecting the feed_id into every map
-                        Map<String, Object> resultMap = new HashMap<>();
-                        resultMap.put("feed_id", feedId);
-                        for (int i = 1; i < nColumns; i++) {
-                            resultMap.put(meta.getColumnName(i), resultSet.getObject(i));
-                        }
-                        results.add(resultMap);
-                    }
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
         }
+        for (String key : environment.getArguments().keySet()) {
+            if ("feed_id".equals(key)) continue;
+            List<String> values = (List<String>) environment.getArguments().get(key);
+            if (values != null && !values.isEmpty()) conditions.add(makeInClause(key, values));
+        }
+        if ( ! conditions.isEmpty()) {
+            sqlBuilder.append(" where ");
+            sqlBuilder.append(String.join(" and ", conditions));
+        }
+        Connection connection = null;
+        try {
+            connection = GraphQLMain.dataSource.getConnection();
+            Statement statement = connection.createStatement();
+            LOG.info("SQL: {}", sqlBuilder.toString());
+            if (statement.execute(sqlBuilder.toString())) {
+                ResultSet resultSet = statement.getResultSet();
+                ResultSetMetaData meta = resultSet.getMetaData();
+                int nColumns = meta.getColumnCount();
+                // Iterate over result rows
+                while (resultSet.next()) {
+                    // Create a Map to hold the contents of this row, injecting the feed_id into every map
+                    Map<String, Object> resultMap = new HashMap<>();
+                    resultMap.put("namespace", namespace);
+                    for (int i = 1; i < nColumns; i++) {
+                        resultMap.put(meta.getColumnName(i), resultSet.getObject(i));
+                    }
+                    results.add(resultMap);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            DbUtils.closeQuietly(connection);
+        }
+        // Return a List of Maps, one Map for each row in the result.
         return results;
     }
 

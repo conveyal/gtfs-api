@@ -33,13 +33,20 @@ public class GraphQLMain {
 
     private static final ResponseTransformer JSON_TRANSFORMER = new JsonTransformer();
 
-    // FIXME static state
     public static DataSource dataSource;
 
+    /**
+     * Here are some sample database URLs
+     * H2_FILE_URL = "jdbc:h2:file:~/test-db"; // H2 memory does not seem faster than file
+     * SQLITE_FILE_URL = "jdbc:sqlite:/Users/abyrd/test-db";
+     * POSTGRES_LOCAL_URL = "jdbc:postgresql://localhost/catalogue";
+     */
     public static void main (String[] args) {
+        String databaseUrl = args[0];
         ApiMain.initialize(null, null, "/Users/abyrd/gtfs/test");
-        GraphQLMain.dataSource = SqlLibrary.createDataSource("jdbc:postgresql://localhost/catalogue");
+        GraphQLMain.dataSource = SqlLibrary.createDataSource(databaseUrl);
         CorsFilter.apply();
+        // Can we just pass in reference objectMapper::writeValueAsString? Why the mix-ins in jsonTransformer?
         get("/graphql", GraphQLController::get, JSON_TRANSFORMER);
         post("/graphql", GraphQLController::post, JSON_TRANSFORMER);
         get("/graphql/schema", GraphQLController::getSchema, JSON_TRANSFORMER);
@@ -47,3 +54,4 @@ public class GraphQLMain {
     }
 
 }
+
