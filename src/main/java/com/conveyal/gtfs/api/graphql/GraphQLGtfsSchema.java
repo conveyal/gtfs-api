@@ -1,11 +1,6 @@
 package com.conveyal.gtfs.api.graphql;
 
-import com.conveyal.gtfs.api.graphql.fetchers.FeedFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.PatternFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.RouteFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.StopFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.StopTimeFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.*;
 import com.conveyal.gtfs.api.graphql.types.FeedType;
 import com.conveyal.gtfs.api.graphql.types.PatternType;
 import com.conveyal.gtfs.api.graphql.types.RouteType;
@@ -19,9 +14,10 @@ import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
 
 /**
- * Created by matthewc on 3/9/16.
+ * This defines the types for our GraphQL API, and wires them up to functions that can fetch data from JDBC databases.
  */
 public class GraphQLGtfsSchema {
+
     public static GraphQLObjectType stopType = StopType.build();
 
     public static GraphQLObjectType stopTimeType = StopTimeType.build();
@@ -39,20 +35,24 @@ public class GraphQLGtfsSchema {
             .description("Root level query for routes, stops, feeds, patterns, trips, and stopTimes within GTFS feeds.")
             .field(newFieldDefinition()
                     .name("routes")
-                    .description("List of GTFS routes optionally queried by route_id (feed_id required).")
+                    .description("List of GTFS routes optionally filtered by route_id. feed_id must be specified.")
                     .type(new GraphQLList(routeType))
-                    .argument(multiStringArg("route_id"))
                     .argument(multiStringArg("feed_id"))
-                    .dataFetcher(RouteFetcher::apex)
+                    .argument(multiStringArg("route_id"))
+                    .dataFetcher(new JDBCFetcher("routes"))
                     .build()
             )
             .field(newFieldDefinition()
                     .name("stops")
                     .type(new GraphQLList(stopType))
+                    // We actually want to accept a list of groups of these parameters
+                    // {feed_id: xyz, stop_id: [1,2,3]}, {feed_id: xyz, stop_id: [1,2,3]}
+                    // In fact maybe we shouldnt even allow arrays inside these, just one feedId and one stop or route ID.
                     .argument(multiStringArg("feed_id"))
                     .argument(multiStringArg("stop_id"))
                     .argument(multiStringArg("route_id"))
                     .argument(multiStringArg("pattern_id"))
+                    // And this stuff should be grouped into a single object {lat:, lon:...}
                     .argument(floatArg("lat"))
                     .argument(floatArg("lon"))
                     .argument(floatArg("radius"))
@@ -88,9 +88,10 @@ public class GraphQLGtfsSchema {
             )
             .field(newFieldDefinition()
                     .name("trips")
+                    .argument(multiStringArg("feed_id"))
                     .argument(multiStringArg("trip_id"))
                     .argument(multiStringArg("route_id"))
-                    .dataFetcher(TripDataFetcher::apex)
+                    .dataFetcher(new JDBCFetcher("trips"))
                     .type(new GraphQLList(tripType))
                     .build()
             )
@@ -103,8 +104,6 @@ public class GraphQLGtfsSchema {
                     .build()
             )
             .build();
-
-
 
     public static GraphQLSchema schema = GraphQLSchema.newSchema().query(rootQuery).build();
 

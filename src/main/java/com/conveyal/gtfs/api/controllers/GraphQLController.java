@@ -19,7 +19,8 @@ import java.util.Map;
 import static spark.Spark.halt;
 
 /**
- * Created by matthewc on 3/9/16.
+ * This Spark Controller contains methods to provide HTTP responses to GraphQL queries, including a query for the
+ * GraphQL schema.
  */
 public class GraphQLController {
     // todo shared objectmapper
@@ -28,7 +29,11 @@ public class GraphQLController {
     private static final Logger LOG = LoggerFactory.getLogger(GraphQLController.class);
     private static final GraphQL GRAPHQL = new GraphQL(GraphQLGtfsSchema.schema);
 
+    /**
+     * A Spark Controller that responds to a GraphQL query.
+     */
     public static Object get (Request req, Response res) {
+        long startTime = System.currentTimeMillis();
         Map<String, Object> variables = null;
         String vars = req.queryParams("variables");
         String query = req.queryParams("query");
@@ -38,7 +43,7 @@ public class GraphQLController {
         }
         try {
             variables = mapper.readValue(vars, new TypeReference<Map<String, Object>>() {
-            });
+        });
         } catch (IOException e) {
             LOG.warn("Error processing variable JSON", e);
             halt(404, "Malformed JSON");
@@ -51,10 +56,15 @@ public class GraphQLController {
             return errs;
         }
         else {
+            long endTime = System.currentTimeMillis();
+            LOG.info("Query took {} msec", endTime - startTime);
             return er.getData();
         }
     }
 
+    /**
+     * A Spark Controller that returns the GraphQL schema.
+     */
     public static Object getSchema (Request req, Response res) {
         return GRAPHQL.execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
     }

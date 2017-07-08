@@ -1,5 +1,6 @@
 package com.conveyal.gtfs.api.graphql.types;
 
+import com.conveyal.gtfs.api.graphql.fetchers.MapFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.PatternFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.StopTimeFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
@@ -19,12 +20,12 @@ public class TripType {
     public static GraphQLObjectType build () {
         return newObject()
                 .name("trip")
-                .field(string("trip_id"))
-                .field(string("trip_headsign"))
-                .field(string("trip_short_name"))
-                .field(string("block_id"))
-                .field(intt("direction_id"))
-                .field(string("route_id"))
+                .field(MapFetcher.field("trip_id"))
+                .field(MapFetcher.field("trip_headsign"))
+                .field(MapFetcher.field("trip_short_name"))
+                .field(MapFetcher.field("block_id"))
+                .field(MapFetcher.field("direction_id", GraphQLInt))
+                .field(MapFetcher.field("route_id"))
                 .field(feed())
                 .field(newFieldDefinition()
                         .name("pattern")

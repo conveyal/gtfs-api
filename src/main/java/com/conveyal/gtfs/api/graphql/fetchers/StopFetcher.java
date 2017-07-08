@@ -131,6 +131,7 @@ public class StopFetcher {
                 .collect(Collectors.toList());
     }
 
+    /** @return the number of stops in the given pattern */
     public static Long fromPatternCount(DataFetchingEnvironment environment) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) environment.getSource();
 

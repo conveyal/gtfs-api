@@ -1,15 +1,14 @@
 package com.conveyal.gtfs.api.graphql.types;
 
-import com.conveyal.gtfs.api.graphql.fetchers.FeedFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.PatternFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.StatFetcher;
-import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
+import com.conveyal.gtfs.api.graphql.fetchers.*;
+import com.sun.corba.se.impl.orbutil.graph.Graph;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
 
 import static com.conveyal.gtfs.api.util.GraphQLUtil.*;
 import static graphql.Scalars.GraphQLLong;
+import static graphql.Scalars.GraphQLString;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
 
@@ -29,16 +28,17 @@ public class RouteType {
 
         return newObject()
                 .name("route")
-                .description("A GTFS route object")
-                .field(string("route_id"))
-                // TODO agency
-                .field(string("route_short_name"))
-                .field(string("route_long_name"))
-                .field(string("route_desc"))
-                .field(string("route_url"))
+                .description("A line from a GTFS routes.txt table")
+                .field(MapFetcher.field("feed_id"))
+                .field(MapFetcher.field("agency_id"))
+                .field(MapFetcher.field("route_id"))
+                .field(MapFetcher.field("route_short_name"))
+                .field(MapFetcher.field("route_long_name"))
+                .field(MapFetcher.field("route_desc"))
+                .field(MapFetcher.field("route_url"))
                 // TODO route_type as enum
-                .field(string("route_color"))
-                .field(string("route_text_color"))
+                .field(MapFetcher.field("route_color"))
+                .field(MapFetcher.field("route_text_color"))
                 .field(feed())
                 .field(newFieldDefinition()
                         .type(new GraphQLList(new GraphQLTypeReference("trip")))
