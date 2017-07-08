@@ -36,7 +36,8 @@ public class RouteType {
                 .field(MapFetcher.field("route_long_name"))
                 .field(MapFetcher.field("route_desc"))
                 .field(MapFetcher.field("route_url"))
-                // TODO route_type as enum
+                // TODO route_type as enum or int
+                .field(MapFetcher.field("route_type"))
                 .field(MapFetcher.field("route_color"))
                 .field(MapFetcher.field("route_text_color"))
                 .field(feed())

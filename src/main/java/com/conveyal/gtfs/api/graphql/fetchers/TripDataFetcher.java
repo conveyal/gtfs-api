@@ -57,6 +57,11 @@ public class TripDataFetcher {
                         .map(trip -> new WrappedGTFSEntity(feed.id, trip))
                         .forEach(trips::add);
             }
+            else {
+                feed.feed.trips.values().stream()
+                        .map(trip -> new WrappedGTFSEntity(feed.id, trip))
+                        .forEach(trips::add);
+            }
         }
 
         return trips;

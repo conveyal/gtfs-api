@@ -2,7 +2,9 @@ package com.conveyal.gtfs.api.controllers;
 
 import com.conveyal.gtfs.api.graphql.GraphQLGtfsSchema;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.GraphQLError;
@@ -62,10 +64,44 @@ public class GraphQLController {
         }
     }
 
+    public static Object post (Request req, Response res) {
+        Map<String, Object> variables = null;
+        JsonNode node = null;
+        try {
+            node = mapper.readTree(req.body());
+        } catch (IOException e) {
+            LOG.warn("Error processing variable JSON", e);
+            halt(404, "Malformed JSON");
+        }
+        String vars = node.get("variables").asText();
+        String query = node.get("query").asText();
+        if (vars == null && query == null) {
+            return GRAPHQL.execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
+        }
+        try {
+            variables = mapper.readValue(vars, new TypeReference<Map<String, Object>>() {
+            });
+        } catch (IOException e) {
+            LOG.warn("Error processing variable JSON", e);
+            halt(404, "Malformed JSON");
+        }
+
+        ExecutionResult er = GRAPHQL.execute(query, null, null, variables);
+        List<GraphQLError> errs = er.getErrors();
+        if (!errs.isEmpty()) {
+            res.status(400);
+            return errs;
+        }
+        else {
+            return er.getData();
+        }
+    }
+
     /**
      * A Spark Controller that returns the GraphQL schema.
      */
     public static Object getSchema (Request req, Response res) {
         return GRAPHQL.execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
     }
+
 }

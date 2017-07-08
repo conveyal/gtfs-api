@@ -97,6 +97,7 @@ public class GraphQLGtfsSchema {
             )
             .field(newFieldDefinition()
                     .name("stopTimes")
+                    .argument(multiStringArg("feed_id"))
                     .argument(multiStringArg("stop_id"))
                     .argument(multiStringArg("trip_id"))
                     .dataFetcher(StopTimeFetcher::apex)
