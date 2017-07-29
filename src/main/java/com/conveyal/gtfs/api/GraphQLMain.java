@@ -1,5 +1,6 @@
 package com.conveyal.gtfs.api;
 
+import com.conveyal.gtfs.GTFS;
 import com.conveyal.gtfs.api.controllers.GraphQLController;
 import com.conveyal.gtfs.api.controllers.JsonTransformer;
 import com.conveyal.gtfs.api.util.CorsFilter;
@@ -35,22 +36,27 @@ public class GraphQLMain {
 
     public static DataSource dataSource;
 
-    /**
-     * Here are some sample database URLs
-     * H2_FILE_URL = "jdbc:h2:file:~/test-db"; // H2 memory does not seem faster than file
-     * SQLITE_FILE_URL = "jdbc:sqlite:/Users/abyrd/test-db";
-     * POSTGRES_LOCAL_URL = "jdbc:postgresql://localhost/catalogue";
-     */
     public static void main (String[] args) {
         String databaseUrl = args[0];
-        ApiMain.initialize(null, null, "/Users/abyrd/gtfs/test");
-        GraphQLMain.dataSource = SqlLibrary.createDataSource(databaseUrl);
+        String apiPrefix = args[1] != null ? args[1] : "/";
+        GraphQLMain.initialize(
+                GTFS.createDataSource(databaseUrl, null, null),
+                apiPrefix
+        );
         CorsFilter.apply();
+    }
+
+    /**
+     * DataSource created with GTFS::createDataSource (see main() for example)
+     * API prefix should begin and end with "/", e.g. "/api/"
+     */
+    public static void initialize(DataSource dataSource, String apiPrefix) {
+        GraphQLMain.dataSource = dataSource;
         // Can we just pass in reference objectMapper::writeValueAsString? Why the mix-ins in jsonTransformer?
-        get("/graphql", GraphQLController::get, JSON_TRANSFORMER);
-        post("/graphql", GraphQLController::post, JSON_TRANSFORMER);
-        get("/graphql/schema", GraphQLController::getSchema, JSON_TRANSFORMER);
-        post("/graphql/schema", GraphQLController::getSchema, JSON_TRANSFORMER);
+        get(apiPrefix + "graphql", GraphQLController::get, JSON_TRANSFORMER);
+        post(apiPrefix + "graphql", GraphQLController::post, JSON_TRANSFORMER);
+        get(apiPrefix + "graphql/schema", GraphQLController::getSchema, JSON_TRANSFORMER);
+        post(apiPrefix + "graphql/schema", GraphQLController::getSchema, JSON_TRANSFORMER);
     }
 
 }
