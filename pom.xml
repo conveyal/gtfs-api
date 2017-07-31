@@ -6,7 +6,8 @@
 
     <groupId>com.conveyal</groupId>
     <artifactId>gtfs-api</artifactId>
-    <version>0.6-SNAPSHOT</version>
+    <!-- version 0.7 will have SQL support, unlike 0.6  -->
+    <version>0.7-SNAPSHOT</version>
 
     <!-- Define where the source code for this project lives -->
     <scm>
