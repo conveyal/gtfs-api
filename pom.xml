@@ -96,6 +96,12 @@
             <name>check central first to avoid a lot of not found warnings</name>
             <url>https://repo1.maven.org/maven2</url>
         </repository>
+        <!-- The development versions of gtfs-lib are to be found in Sonatype OSS repo. -->
+        <repository>
+            <id>sonatype</id>
+            <name>sonatype snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
         <repository>
             <id>conveyal</id>
             <name>conveyal</name>
