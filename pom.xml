@@ -130,6 +130,7 @@
             <version>2.2</version>
         </dependency>
 
+        <!-- this API is essentially a wrapper around Conveyal GTFS-lib -->
         <dependency>
             <groupId>com.conveyal</groupId>
             <artifactId>gtfs-lib</artifactId>
