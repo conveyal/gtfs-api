@@ -26,9 +26,9 @@ public class FeedFetcher implements DataFetcher {
 
     @Override
     public Map<String, Object> get (DataFetchingEnvironment environment) {
-        String namespace = environment.getArgument("namespace"); // This is the unique table prefix.
+        String namespace = environment.getArgument("namespace"); // This is the unique table prefix (the "schema").
         StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.append(String.format("select * from feed_info where namespace = '%s'", namespace));
+        sqlBuilder.append(String.format("select * from feeds where namespace = '%s'", namespace));
         Connection connection = null;
         try {
             connection = GraphQLMain.dataSource.getConnection();
@@ -47,6 +47,7 @@ public class FeedFetcher implements DataFetcher {
                         resultMap.put(meta.getColumnName(i), resultSet.getObject(i));
                     }
                     connection.close();
+                    // FIXME return inside a while loop? This would only hit the first item.
                     return resultMap;
                 }
             }
