@@ -7,9 +7,13 @@ import com.conveyal.gtfs.api.graphql.types.RouteType;
 import com.conveyal.gtfs.api.graphql.types.StopTimeType;
 import com.conveyal.gtfs.api.graphql.types.StopType;
 import com.conveyal.gtfs.api.graphql.types.TripType;
+import graphql.Scalars;
 import graphql.schema.*;
 
 import static com.conveyal.gtfs.api.util.GraphQLUtil.*;
+import static graphql.Scalars.GraphQLFloat;
+import static graphql.Scalars.GraphQLInt;
+import static graphql.Scalars.GraphQLLong;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
 
@@ -33,17 +37,199 @@ public class GraphQLGtfsSchema {
     // Another way to accomplish this would be to use name references in every definition except the top level,
     // and make a dummy declaration that will call them all to be pulled in by reference at once.
 
-    public static GraphQLObjectType patternType = PatternType.build(); // forward ref to route, stop, trip
 
-    public static GraphQLObjectType tripType = TripType.build(); // refers to pattern, fwd ref to stopTime
+    // The old types are defined in separate class files. I'm defining new ones here.
 
-    public static GraphQLObjectType stopTimeType = StopTimeType.build(); // refers to trip
+    // by using static fields to hold these types, backward references are enforced. a few forward references are inserted explicitly.
 
-    public static GraphQLObjectType routeType = RouteType.build(); // refers to trip
+    // Represents rows from trips.txt
+    public static final GraphQLObjectType tripType = newObject()
+            .name("trip")
+            .field(MapFetcher.field("trip_id"))
+            .field(MapFetcher.field("trip_headsign"))
+            .field(MapFetcher.field("trip_short_name"))
+            .field(MapFetcher.field("block_id"))
+            .field(MapFetcher.field("direction_id", GraphQLInt))
+            .field(MapFetcher.field("route_id"))
+            // TODO add patterns
+            .field(newFieldDefinition()
+                    .name("stop_times")
+                    .type(new GraphQLTypeReference("stopTime")) // forward reference as yet undefined stopTimeType
+                    .argument(multiStringArg("stop_id"))
+                    .dataFetcher(new JDBCFetcher("stop_times")) // Add param for where-clause in parent object
+                    .build()
+            )
+            // some pseudo-fields to reduce the amount of data that has to be fetched over GraphQL to summarize
+            .field(newFieldDefinition()
+                    .name("start_time")
+                    .type(GraphQLInt)
+                    .dataFetcher(TripDataFetcher::getStartTime)
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .name("duration")
+                    .type(GraphQLInt)
+                    .dataFetcher(TripDataFetcher::getDuration)
+                    .build()
+            )
+            .build();
 
-    public static GraphQLObjectType stopType = StopType.build(); // refers to stopTime and route
 
-    public static GraphQLObjectType feedType = FeedType.build(); // refers to route and stop
+    // Represents rows from stop_times.txt
+    public static final GraphQLObjectType stopTimeType = newObject().name("stopTime")
+            .field(intt("arrival_time"))
+            .field(intt("departure_time"))
+            .field(intt("stop_sequence"))
+            .field(string("stop_id"))
+            .field(string("stop_headsign"))
+            .field(doublee("shape_dist_traveled"))
+            .field(feed())
+            .field(newFieldDefinition()
+                .name("trip")
+                .type(GraphQLGtfsSchema.tripType)
+                .dataFetcher(TripDataFetcher::fromStopTime)
+                .argument(stringArg("date"))
+                .argument(longArg("from"))
+                .argument(longArg("to"))
+                .build()
+            )
+            .build();
+
+
+    // Represents rows from routes.txt
+    public static final GraphQLObjectType routeType = newObject().name("route")
+            .description("A line from a GTFS routes.txt table")
+            .field(MapFetcher.field("line_number", Scalars.GraphQLInt))
+            .field(MapFetcher.field("agency_id"))
+            .field(MapFetcher.field("route_id"))
+            .field(MapFetcher.field("route_short_name"))
+            .field(MapFetcher.field("route_long_name"))
+            .field(MapFetcher.field("route_desc"))
+            .field(MapFetcher.field("route_url"))
+            // TODO route_type as enum or int
+            .field(MapFetcher.field("route_type"))
+            .field(MapFetcher.field("route_color"))
+            .field(MapFetcher.field("route_text_color"))
+//            .field(newFieldDefinition()
+//                    .type(new GraphQLList(GraphQLGtfsSchema.tripType))
+//                    .name("trips")
+//                    .dataFetcher(new JDBCFetcher("trips"))
+//                    .build()
+//            )
+//            .field(newFieldDefinition()
+//                    .type(GraphQLLong)
+//                    .name("trip_count")
+//                    .dataFetcher(TripDataFetcher::fromRouteCount) // TODO proper generic SQL row counter "select count(*) from X where Y = Z"
+//                    .build())
+            .build();
+
+    // Represents rows from stops.txt
+    // Contains a reference to stopTimeType and routeType
+    public static final GraphQLObjectType stopType = newObject().name("stop")
+            .description("A GTFS stop object")
+            .field(MapFetcher.field("stop_id"))
+            .field(MapFetcher.field("stop_name"))
+            .field(MapFetcher.field("stop_code"))
+            .field(MapFetcher.field("stop_desc"))
+            .field(MapFetcher.field("stop_lon", GraphQLFloat))
+            .field(MapFetcher.field("stop_lat", GraphQLFloat))
+            .field(MapFetcher.field("zone_id"))
+            .field(MapFetcher.field("stop_url"))
+            .field(MapFetcher.field("stop_timezone"))
+//            .field(newFieldDefinition()
+//                    .name("stop_times")
+//                    .description("The list of stop_times for a stop")
+//                    .type(new GraphQLList(GraphQLGtfsSchema.stopTimeType))
+//                    .argument(stringArg("date"))
+//                    .argument(longArg("from"))
+//                    .argument(longArg("to"))
+//                    .dataFetcher(StopTimeFetcher::fromStop)
+//                    .build()
+//            )
+//            .field(newFieldDefinition()
+//                    .name("routes")
+//                    .description("The list of routes that serve a stop")
+//                    .type(new GraphQLList(GraphQLGtfsSchema.routeType))
+//                    .argument(multiStringArg("route_id"))
+//                    .dataFetcher(RouteFetcher::fromStop)
+//                    .build()
+//            )
+            .build();
+
+    /**
+     * The GraphQL API type representing entries in the table of errors encountered while loading or validating a feed.
+     */
+    public static GraphQLObjectType validationErrorType = newObject().name("validationError")
+            .description("An error detected when loading or validating a feed.")
+            .field(MapFetcher.field("error_id", GraphQLInt))
+            .field(MapFetcher.field("error_type"))
+            .field(MapFetcher.field("entity_type"))
+            .field(MapFetcher.field("line_number", GraphQLInt))
+            .field(MapFetcher.field("entity_id"))
+            .field(MapFetcher.field("entity_sequence", GraphQLInt))
+            .field(MapFetcher.field("bad_value"))
+            .build();
+
+    /**
+     * The GraphQL API type representing entries in the top-level table listing all the feeds imported into a gtfs-api
+     * database, and with sub-fields for each table of GTFS entities within a single feed.
+     */
+    public static final GraphQLObjectType feedType = newObject().name("feedVersion")
+            // First, the fields present in the top level table.
+            .field(MapFetcher.field("namespace"))
+            .field(MapFetcher.field("feed_id"))
+            .field(MapFetcher.field("feed_version"))
+            .field(MapFetcher.field("filename"))
+            .field(MapFetcher.field("md5"))
+            .field(MapFetcher.field("sha1"))
+            // Then the fields for the sub-tables within the feed.
+            .field(newFieldDefinition()
+                .name("errors")
+                .argument(stringArg("namespace"))
+                .type(new GraphQLList(validationErrorType))
+                .argument(multiStringArg("error_type"))
+                .dataFetcher(new JDBCFetcher("errors"))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("routes")
+                .type(new GraphQLList(GraphQLGtfsSchema.routeType))
+                .argument(stringArg("namespace"))
+                .argument(multiStringArg("route_id"))
+                .dataFetcher(new JDBCFetcher("routes"))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("stops")
+                .type(new GraphQLList(GraphQLGtfsSchema.stopType))
+                .argument(stringArg("namespace"))
+                .argument(multiStringArg("stop_id"))
+                .dataFetcher(new JDBCFetcher("stops"))
+                .build()
+            )
+            .build();
+
+    /**
+     * This is the top-level query - you must always specify a feed to fetch, and then some other things inside that feed.
+     * TODO decide whether to call this feedVersion or feed within gtfs-lib context.
+     */
+    private static GraphQLObjectType feedQuery = newObject()
+            .name("feedQuery")
+            .field(newFieldDefinition()
+                .name("feed")
+                .type(feedType)
+                // We scope to a single feed namespace, otherwise GTFS entity IDs are ambiguous.
+                .argument(stringArg("namespace"))
+                .dataFetcher(new FeedFetcher())
+                .build()
+            )
+            .build();
+
+    /**
+     * This is the new schema as of July 2017, where all sub-entities are wrapped in a feed.
+     * Because all of these fields are static (ugh) this must be declared after the feedQuery it references.
+     */
+    public static final GraphQLSchema feedBasedSchema = GraphQLSchema.newSchema().query(feedQuery).build();
 
     private void example () {
         newObject()
@@ -80,29 +266,6 @@ public class GraphQLGtfsSchema {
                         .build()
                 )
                 .field(newFieldDefinition()
-                        .name("feeds")
-                        .argument(multiStringArg("feed_id"))
-                        .dataFetcher(FeedFetcher::apex)
-                        .type(new GraphQLList(feedType))
-                        .build()
-                )
-                // TODO: determine if there's a better way to get at the refs for patterns, trips, and stopTimes than injecting them at the root.
-                .field(newFieldDefinition()
-                        .name("patterns")
-                        .type(new GraphQLList(patternType))
-                        .argument(multiStringArg("feed_id"))
-                        .argument(multiStringArg("pattern_id"))
-                        .argument(floatArg("lat"))
-                        .argument(floatArg("lon"))
-                        .argument(floatArg("radius"))
-                        .argument(floatArg("max_lat"))
-                        .argument(floatArg("max_lon"))
-                        .argument(floatArg("min_lat"))
-                        .argument(floatArg("min_lon"))
-                        .dataFetcher(PatternFetcher::apex)
-                        .build()
-                )
-                .field(newFieldDefinition()
                         .name("trips")
                         .argument(multiStringArg("feed_id"))
                         .argument(multiStringArg("trip_id"))
@@ -124,22 +287,5 @@ public class GraphQLGtfsSchema {
     }
 
 
-    /**
-     * This is the top-level query - you must always specify a feed to fetch, and then some other things inside that feed.
-     */
-    private static GraphQLObjectType feedQuery = newObject()
-            .name("feedQuery")
-            .field(newFieldDefinition()
-                    .name("feed")
-                    .type(GraphQLGtfsSchema.feedType)
-                    // single feed namespace, otherwise route_ids and such are ambiguous
-                    .argument(stringArg("namespace"))
-                    .dataFetcher(new FeedFetcher())
-                    .build()
-            )
-            .build();
-
-    /** This is the new schema as of July 2017, where all sub-entities are wrapped in a feed. */
-    public static GraphQLSchema feedBasedSchema = GraphQLSchema.newSchema().query(feedQuery).build();
 
 }

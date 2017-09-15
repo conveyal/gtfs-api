@@ -24,13 +24,7 @@ public abstract class TripType {
                 .field(MapFetcher.field("block_id"))
                 .field(MapFetcher.field("direction_id", GraphQLInt))
                 .field(MapFetcher.field("route_id"))
-                .field(feed())
-                .field(newFieldDefinition()
-                        .name("pattern")
-                        .type(GraphQLGtfsSchema.patternType)
-                        .dataFetcher(PatternFetcher::fromTrip)
-                        .build()
-                )
+                // TODO add patterns
                 .field(newFieldDefinition()
                         .name("stop_times")
                         .type(new GraphQLTypeReference("stopTime")) // forward reference

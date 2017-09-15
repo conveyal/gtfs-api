@@ -29,7 +29,7 @@ public abstract class FeedType {
     public static GraphQLObjectType build() {
         return newObject()
                 .name("feed")
-                .description("Provides information for a GTFS feed and access to the entities it contains")
+                .description("Provides information for a GTFS feed and access to the entities it contains.")
                 .field(MapFetcher.field("feed_id"))
                 .field(MapFetcher.field("feed_publisher_name"))
                 .field(MapFetcher.field("feed_publisher_url"))

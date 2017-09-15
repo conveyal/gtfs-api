@@ -2,6 +2,7 @@ package com.conveyal.gtfs.api.graphql.fetchers;
 
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.GraphQLMain;
+import com.conveyal.gtfs.api.graphql.GraphQLGtfsSchema;
 import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.Route;
@@ -10,6 +11,8 @@ import com.conveyal.gtfs.storage.SqlLibrary;
 import com.sun.media.jai.util.DataBufferUtils;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLList;
 import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.conveyal.gtfs.api.util.GraphQLUtil.multiStringArg;
+import static com.conveyal.gtfs.api.util.GraphQLUtil.stringArg;
+import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 
 /**
  * A generic fetcher to get fields out of an SQL database table.
@@ -34,6 +41,19 @@ public class JDBCFetcher implements DataFetcher {
 
     public JDBCFetcher(String tableName) {
         this.tableName = tableName;
+    }
+
+    // Generate a field definition for inclusion in a GraphQL schema.
+    // Hmm, this doesn't work well because we need custom inclusion of sub-tables in each table type.
+    // We should make stock field definitions for these tables
+    public static GraphQLFieldDefinition field (String tableName) {
+        return newFieldDefinition()
+                .name(tableName)
+                .type(new GraphQLList(GraphQLGtfsSchema.routeType))
+                .argument(stringArg("namespace"))
+                .argument(multiStringArg("route_id"))
+                .dataFetcher(new JDBCFetcher(tableName))
+                .build();
     }
 
     // Horrifically, we're going from SQL response to Gtfs-lib Java model object to GraphQL Java object to JSON.

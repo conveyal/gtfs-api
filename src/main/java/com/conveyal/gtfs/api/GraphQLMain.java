@@ -37,8 +37,11 @@ public class GraphQLMain {
 
     public static void main (String[] args) {
         String databaseUrl = args[0];
-        String apiPrefix = args[1] != null ? args[1] : "/";
-        GraphQLMain.initialize(
+        String apiPrefix = "/";
+        if (args.length > 1) {
+            apiPrefix = args[1];
+        }
+        GraphQLMain.initialize (
                 GTFS.createDataSource(databaseUrl, null, null),
                 apiPrefix
         );
@@ -49,9 +52,10 @@ public class GraphQLMain {
      * DataSource created with GTFS::createDataSource (see main() for example)
      * API prefix should begin and end with "/", e.g. "/api/"
      */
-    public static void initialize(DataSource dataSource, String apiPrefix) {
+    public static void initialize (DataSource dataSource, String apiPrefix) {
         GraphQLMain.dataSource = dataSource;
-        // Can we just pass in reference objectMapper::writeValueAsString? Why the mix-ins in jsonTransformer?
+        // Can we just pass in reference objectMapper::writeValueAsString?
+        // Why does jsonTransformer have mix-ins?
         get(apiPrefix + "graphql", GraphQLController::get, JSON_TRANSFORMER);
         post(apiPrefix + "graphql", GraphQLController::post, JSON_TRANSFORMER);
         get(apiPrefix + "graphql/schema", GraphQLController::getSchema, JSON_TRANSFORMER);

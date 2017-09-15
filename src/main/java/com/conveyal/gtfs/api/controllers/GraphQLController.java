@@ -40,7 +40,6 @@ public class GraphQLController {
      * A Spark Controller that responds to a GraphQL query in HTTP GET query parameters.
      */
     public static Object get (Request request, Response response) {
-        Map<String, Object> variables = null;
         String varsJson = request.queryParams("variables");
         String queryJson = request.queryParams("query");
         return doQuery(varsJson, queryJson, response);
@@ -49,7 +48,7 @@ public class GraphQLController {
     /**
      * A Spark Controller that responds to a GraphQL query in an HTTP POST body.
      */
-    public static Object post (Request req, Response res) {
+    public static Object post (Request req, Response response) {
         JsonNode node = null;
         try {
             node = mapper.readTree(req.body());
@@ -57,9 +56,10 @@ public class GraphQLController {
             LOG.warn("Error processing POST body JSON", e);
             halt(400, "Malformed JSON");
         }
+        // FIXME converting String to JSON nodes and back to string, then re-parsing to Map.
         String vars = node.get("variables").asText();
         String query = node.get("query").asText();
-        return doQuery(vars, query, res);
+        return doQuery(vars, query, response);
     }
 
     private static Object doQuery (String varsJson, String queryJson, Response response) {
@@ -69,15 +69,15 @@ public class GraphQLController {
         }
         try {
             Map<String, Object> variables = mapper.readValue(varsJson, new TypeReference<Map<String, Object>>(){});
-            ExecutionResult er = GRAPHQL.execute(queryJson, null, null, variables);
-            List<GraphQLError> errs = er.getErrors();
+            ExecutionResult result = GRAPHQL.execute(queryJson, null, null, variables);
+            List<GraphQLError> errs = result.getErrors();
             if (!errs.isEmpty()) {
                 response.status(400);
                 return errs;
             } else {
                 long endTime = System.currentTimeMillis();
                 LOG.info("Query took {} msec", endTime - startTime);
-                return er.getData();
+                return result.getData();
             }
         } catch (IOException e) {
             LOG.warn("Error processing variable JSON", e);
