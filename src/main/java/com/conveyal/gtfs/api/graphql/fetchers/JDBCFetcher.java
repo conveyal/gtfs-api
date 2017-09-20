@@ -35,6 +35,10 @@ public class JDBCFetcher implements DataFetcher {
 
     public static final Logger LOG = LoggerFactory.getLogger(JDBCFetcher.class);
 
+    // Make this an option to the GraphQL query.
+    public static final int DEFAULT_ROWS_TO_FETCH = 50;
+    public static final int MAX_ROWS_TO_FETCH = 500;
+
     String tableName;
 
     // Supply an SQL result row -> Object transformer
@@ -79,7 +83,9 @@ public class JDBCFetcher implements DataFetcher {
         // String namespace = environment.getArgument("namespace"); // This is going to be the unique prefix, not the feedId in the usual sense
         // This DataFetcher only makes sense when the enclosing parent object is a feed or something in a feed.
         // So it should always be represented as a map with a namespace key.
-        Map<String, Object> map = (Map<String, Object>)environment.getSource();
+
+        // GetSource is the context in which this this DataFetcher has been created, in this case a map representing the parent feed.
+        Map<String, Object> map = (Map<String, Object>) environment.getSource();
         String namespace = (String) map.get("namespace");
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder.append(String.format("select * from %s.%s", namespace, tableName));
@@ -91,7 +97,7 @@ public class JDBCFetcher implements DataFetcher {
             }
         }
         for (String key : environment.getArguments().keySet()) {
-            if ("feed_id".equals(key)) continue;
+            if ("limit".equals(key)) continue;
             List<String> values = (List<String>) environment.getArguments().get(key);
             if (values != null && !values.isEmpty()) conditions.add(makeInClause(key, values));
         }
@@ -99,6 +105,14 @@ public class JDBCFetcher implements DataFetcher {
             sqlBuilder.append(" where ");
             sqlBuilder.append(String.join(" and ", conditions));
         }
+        Integer limit = (Integer) environment.getArguments().get("limit");
+        if (limit == null) {
+            limit = DEFAULT_ROWS_TO_FETCH;
+        }
+        if (limit > MAX_ROWS_TO_FETCH) {
+            limit = MAX_ROWS_TO_FETCH;
+        }
+        sqlBuilder.append(" limit " + limit);
         Connection connection = null;
         try {
             connection = GraphQLMain.dataSource.getConnection();
