@@ -4,28 +4,22 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.api.util.CorsFilter;
 import com.conveyal.gtfs.api.util.FeedSourceCache;
+import org.eclipse.jetty.util.ConcurrentHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import org.eclipse.jetty.util.ConcurrentHashSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Created by landon on 2/3/16.
  */
 public class ApiMain {
     public static final Properties config = new Properties();
-    private static String feedBucket;
-    private static String dataDirectory;
-    private static String bucketFolder;
     private static FeedSourceCache cache;
 
     /** IDs of feed sources this API instance is aware of */
@@ -47,16 +41,14 @@ public class ApiMain {
         Routes.routes("api");
     }
 
-    public static void initialize (String feedBucket, String dataDirectory) {
-        initialize(feedBucket, null, dataDirectory);
+    public static FeedSourceCache initialize (String feedBucket, String dataDirectory) {
+        return initialize(feedBucket, null, dataDirectory);
     }
 
     /** Set up the GTFS API. If bundleBucket is null, S3 will not be used */
-    public static void initialize (String feedBucket, String bucketFolder, String dataDirectory) {
-        ApiMain.feedBucket = feedBucket;
-        ApiMain.dataDirectory = dataDirectory;
-        ApiMain.bucketFolder = bucketFolder;
+    public static FeedSourceCache initialize (String feedBucket, String bucketFolder, String dataDirectory) {
         cache = new FeedSourceCache(feedBucket, bucketFolder, new File(dataDirectory));
+        return cache;
     }
 
     /** Register a new feed source with the API */
@@ -74,21 +66,27 @@ public class ApiMain {
         return feedSource;
     }
 
-    /** convenience function to get a feed source without throwing checked exceptions, for example for use in lambdas */
-    public static FeedSource getFeedSource (String id) {
-        FeedSource f;
-        try {
-            f = cache.get(id);
-        } catch (Exception e) {
-            return null;
-        }
+    public static FeedSource getFeedSource (String id) throws Exception {
+        FeedSource f = cache.get(id);
         registeredFeedSources.add(id);
         return f;
     }
 
+    /** convenience function to get a feed source without throwing checked exceptions, for example for use in lambdas */
+    public static FeedSource getFeedSourceWithoutExceptions (String id) {
+      try {
+        FeedSource f = cache.get(id);
+        registeredFeedSources.add(id);
+        return f;
+      } catch (Exception e) {
+        LOG.error("Error retriveving from cache feed " + id, e);
+        return null;
+      }
+    }
+
     public static List<FeedSource> getFeedSources (List<String> feedIds) {
         return feedIds.stream()
-                .map(ApiMain::getFeedSource)
+                .map(ApiMain::getFeedSourceWithoutExceptions)
                 .filter(fs -> fs != null)
                 .collect(Collectors.toList());
     }

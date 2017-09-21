@@ -22,4 +22,9 @@ public class FeedSourceCache extends BaseGTFSCache<FeedSource> {
     protected FeedSource processFeed(GTFSFeed feed) {
         return new FeedSource(feed);
     }
+
+    @Override
+    public GTFSFeed getFeed (String id) {
+        return this.get(id).feed;
+    }
 }

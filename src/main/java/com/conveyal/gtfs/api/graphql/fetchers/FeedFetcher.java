@@ -4,17 +4,18 @@ import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.GraphQLMain;
 import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.api.models.FeedSource;
-import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.FeedInfo;
 import com.vividsolutions.jts.geom.Geometry;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
-import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
-import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +88,7 @@ public class FeedFetcher implements DataFetcher {
 
     public static Geometry getMergedBuffer(DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> feedInfo = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(feedInfo.feedUniqueId);
         if (fs == null) return null;
 
         return fs.feed.getMergedBuffers();
@@ -95,7 +96,7 @@ public class FeedFetcher implements DataFetcher {
 
     public static WrappedGTFSEntity<FeedInfo> forWrappedGtfsEntity (DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> feedInfo = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(feedInfo.feedUniqueId);
         if (fs == null) return null;
 
         return getFeedInfo(fs);
