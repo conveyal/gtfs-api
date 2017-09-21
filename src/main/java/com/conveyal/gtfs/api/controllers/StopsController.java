@@ -1,42 +1,50 @@
 package com.conveyal.gtfs.api.controllers;
 
 
-import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.api.util.GeomUtil;
-import com.conveyal.gtfs.model.*;
-
+import com.conveyal.gtfs.model.Pattern;
+import com.conveyal.gtfs.model.Stop;
 import com.google.common.collect.Iterables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
-
-import com.conveyal.gtfs.api.ApiMain;
-
 import spark.Request;
 import spark.Response;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Maps;
-
-import static spark.Spark.*;
+import static spark.Spark.halt;
 
 /**
  * Created by landon on 2/4/16.
  */
 public class StopsController {
+    private static final Logger LOG = LoggerFactory.getLogger(StopsController.class);
+
     private static Double radius = 1.0; // default 1 km search radius
     public static Object getStops(Request req, Response res){
 
         Set<Stop> stops = new HashSet<>();
-        List<String> feeds = new ArrayList();
+        List<FeedSource> feeds = new ArrayList();
 
         if (req.queryParams("feed") != null) {
 
             for (String feedId : req.queryParams("feed").split(",")){
-                if (ApiMain.getFeedSource(feedId) != null) {
-                    feeds.add(feedId);
+                try {
+                    FeedSource feedSource = ApiMain.getFeedSource(feedId);
+                    if (feedSource != null) {
+                        feeds.add(feedSource);
+                    }
+                } catch (Exception e) {
+                    LOG.error("Error retrieving feed", e);
+                    halt(404, "Error retrieving feed " + feedId);
                 }
             }
             if (feeds.size() == 0){
@@ -45,8 +53,8 @@ public class StopsController {
             // If feed is only param.
             else if (req.params("id") == null) {
                 stops = new HashSet<>();
-                for (String feedId : feeds){
-                    stops.addAll(ApiMain.getFeedSource(feedId).feed.stops.values());
+                for (FeedSource feedSource : feeds){
+                    stops.addAll(feedSource.feed.stops.values());
                 }
             }
         }
@@ -57,7 +65,7 @@ public class StopsController {
 
         // Continue through params
         if (req.params("id") != null) {
-            Stop s = ApiMain.getFeedSource(feeds.get(0)).feed.stops.get(req.params("id"));
+            Stop s = feeds.get(0).feed.stops.get(req.params("id"));
             if(s != null) // && currentUser(req).hasReadPermission(s.projectId))
                 return s;
             else
@@ -70,8 +78,8 @@ public class StopsController {
             Coordinate minCoordinate = new Coordinate(Double.valueOf(req.queryParams("min_lon")), Double.valueOf(req.queryParams("min_lat")));
             Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
 
-            for (String feedId : feeds) {
-                List<Stop> searchResults = ApiMain.getFeedSource(feedId).stopIndex.query(searchEnvelope);
+            for (FeedSource feedSource : feeds) {
+                List<Stop> searchResults = feedSource.stopIndex.query(searchEnvelope);
                 stops.addAll(searchResults);
             }
             return limitStops(req, stops);
@@ -84,8 +92,8 @@ public class StopsController {
                 StopsController.radius = Double.valueOf(req.queryParams("radius"));
             }
             Envelope searchEnvelope = GeomUtil.getBoundingBox(latLon, radius);
-            for (String feedId : feeds) {
-                List<Stop> searchResults = ApiMain.getFeedSource(feedId).stopIndex.query(searchEnvelope);
+            for (FeedSource feedSource : feeds) {
+                List<Stop> searchResults = feedSource.stopIndex.query(searchEnvelope);
                 stops.addAll(searchResults);
             }
             return limitStops(req, stops);
@@ -93,22 +101,19 @@ public class StopsController {
         // query name
         else if (req.queryParams("name") != null){
             stops = new HashSet<>();
-            System.out.println(req.queryParams("name"));
+            LOG.info(req.queryParams("name"));
 
-            for (String feedId : feeds) {
-                System.out.println("looping feed: " + feedId);
+            for (FeedSource feedSource : feeds) {
+                LOG.info("looping feed: " + feedSource.feed.feedId);
 
-                System.out.println("checking feed: " + feedId);
+                LOG.info("checking feed: " + feedSource.feed.feedId);
 
                 // search query must be in upper case to match radix tree keys
-//              Iterable<Stop> searchResults = ApiMain.getFeedSource(feedId).stopTree.getValuesForClosestKeys(req.queryParams("name").toUpperCase());
-//                Iterable<Stop> searchResults = ApiMain.getFeedSource(feedId).stopTree.getValuesForKeysStartingWith(req.queryParams("name").toUpperCase());
-                Iterable<Stop> searchResults = ApiMain.getFeedSource(feedId).stopTree.getValuesForKeysContaining(req.queryParams("name").toUpperCase());
-//                Iterable<Stop> searchResults = ApiMain.getFeedSource(feedId).stopTree.getValues
-//              stops = Iterables.toArray(searchResults, Stop.class);
-                System.out.println(Iterables.size(searchResults));
+                Iterable<Stop> searchResults = feedSource.stopTree.getValuesForKeysContaining(req.queryParams("name").toUpperCase());
+
+                LOG.info(Integer.toString(Iterables.size(searchResults)));
                 for (Stop stop : searchResults) {
-                    System.out.println(stop.stop_name);
+                    LOG.info(stop.stop_name);
                     stops.add(stop);
                 }
             }
@@ -122,18 +127,17 @@ public class StopsController {
         return limitStops(req, stops);
     }
     
-    public static Set<Stop> getStopsForRoute(Request req, List<String> feeds){
+    public static Set<Stop> getStopsForRoute(Request req, List<FeedSource> feeds){
         if (req.queryParams("route") != null){
             String routeId = req.queryParams("route");
-            System.out.println(routeId);
+            LOG.info(routeId);
             Set<Stop> stops = new HashSet<>();
             // loop through feeds
-            for (String feedId : feeds) {
+            for (FeedSource feedSource : feeds) {
                 Set<String> stopIds = new HashSet<>();
-                FeedSource source = ApiMain.getFeedSource(feedId);
 
                 // loop through patterns, check for route and return pattern stops
-                for (Pattern pattern : source.feed.patterns.values()) {
+                for (Pattern pattern : feedSource.feed.patterns.values()) {
                     if (routeId.equals(pattern.route_id)) {
                         stopIds.addAll(pattern.orderedStops);
                         break;
@@ -141,8 +145,8 @@ public class StopsController {
                 }
 
                 for (String stopId : stopIds) {
-                    Stop stop = ApiMain.getFeedSource(feedId).feed.stops.get(stopId);
-                    System.out.println(stopId);
+                    Stop stop = feedSource.feed.stops.get(stopId);
+                    LOG.info(stopId);
                     stops.add(stop);
                 }
             }

@@ -3,26 +3,16 @@ package com.conveyal.gtfs.api.graphql.fetchers;
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.api.models.FeedSource;
-import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import graphql.schema.DataFetchingEnvironment;
-import org.mapdb.Fun;
 
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -63,7 +53,7 @@ public class StopTimeFetcher {
     }
     public static List<WrappedGTFSEntity<StopTime>> fromTrip(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(trip.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(trip.feedUniqueId);
         if (fs == null) return null;
 
         List<String> stopIds = env.getArgument("stop_id");
@@ -85,7 +75,7 @@ public class StopTimeFetcher {
 
     public static List<WrappedGTFSEntity<StopTime>> fromStop (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(stop.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(stop.feedUniqueId);
         if (fs == null) return null;
 
         String d = env.getArgument("date");
