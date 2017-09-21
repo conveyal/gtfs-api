@@ -80,6 +80,13 @@ public class GraphQLUtil {
                 .build();
     }
 
+    public static GraphQLArgument intArg (String name) {
+        return newArgument()
+                .name(name)
+                .type(GraphQLInt)
+                .build();
+    }
+
     public static boolean argumentDefined(DataFetchingEnvironment env, String name) {
         return (env.containsArgument(name) && env.getArgument(name) != null);
     }

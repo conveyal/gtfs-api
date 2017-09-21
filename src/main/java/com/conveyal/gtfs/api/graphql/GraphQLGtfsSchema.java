@@ -186,8 +186,9 @@ public class GraphQLGtfsSchema {
             .field(newFieldDefinition()
                 .name("errors")
                 .argument(stringArg("namespace"))
-                .type(new GraphQLList(validationErrorType))
                 .argument(multiStringArg("error_type"))
+                .argument(intArg("limit"))
+                .type(new GraphQLList(validationErrorType))
                 .dataFetcher(new JDBCFetcher("errors"))
                 .build()
             )
@@ -220,6 +221,7 @@ public class GraphQLGtfsSchema {
                 .type(feedType)
                 // We scope to a single feed namespace, otherwise GTFS entity IDs are ambiguous.
                 .argument(stringArg("namespace"))
+                .argument(multiStringArg("error_type"))
                 .dataFetcher(new FeedFetcher())
                 .build()
             )
