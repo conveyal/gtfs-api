@@ -1,18 +1,14 @@
 package com.conveyal.gtfs.api.graphql.fetchers;
 
-import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.model.Agency;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
-import com.conveyal.gtfs.model.Service;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
-import graphql.execution.ExecutionContext;
 import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.GraphQLType;
 import org.mapdb.Fun;
 
 import java.time.LocalDate;
@@ -26,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-import java.time.temporal.ChronoUnit.*;
 
 import static spark.Spark.halt;
 
@@ -72,7 +66,7 @@ public class TripDataFetcher {
      */
     public static List<WrappedGTFSEntity<Trip>> fromRoute(DataFetchingEnvironment dataFetchingEnvironment) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
-        FeedSource fs = ApiMain.getFeedSource(route.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(route.feedUniqueId);
         if (fs == null) return null;
 
         return fs.feed.trips.values().stream()
@@ -83,7 +77,7 @@ public class TripDataFetcher {
 
     public static Long fromRouteCount(DataFetchingEnvironment dataFetchingEnvironment) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) dataFetchingEnvironment.getSource();
-        FeedSource fs = ApiMain.getFeedSource(route.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(route.feedUniqueId);
         if (fs == null) return null;
 
         return fs.feed.trips.values().stream()
@@ -93,7 +87,7 @@ public class TripDataFetcher {
 
     public static WrappedGTFSEntity<Trip> fromStopTime (DataFetchingEnvironment env) {
         WrappedGTFSEntity<StopTime> stopTime = (WrappedGTFSEntity<StopTime>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(stopTime.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(stopTime.feedUniqueId);
         if (fs == null) return null;
 
         Trip trip = fs.feed.trips.get(stopTime.entity.trip_id);
@@ -103,7 +97,7 @@ public class TripDataFetcher {
 
     public static List<WrappedGTFSEntity<Trip>> fromPattern (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(pattern.feedUniqueId);
         if (fs == null) return null;
 
         Long beginTime = env.getArgument("begin_time");
@@ -148,7 +142,7 @@ public class TripDataFetcher {
     public static Long fromPatternCount (DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
 
-        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(pattern.feedUniqueId);
         if (fs == null) return null;
 
         return pattern.entity.associatedTrips.stream().map(fs.feed.trips::get).count();
@@ -156,7 +150,7 @@ public class TripDataFetcher {
 
     public static Integer getStartTime(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(trip.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(trip.feedUniqueId);
         if (fs == null) return null;
 
         Map.Entry<Fun.Tuple2, StopTime> st = fs.feed.stop_times.ceilingEntry(new Fun.Tuple2(trip.entity.trip_id, null));
@@ -165,7 +159,7 @@ public class TripDataFetcher {
 
     public static Integer getDuration(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(trip.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(trip.feedUniqueId);
         if (fs == null) return null;
 
         Integer startTime = getStartTime(env);

@@ -15,8 +15,12 @@ import com.google.common.collect.Multimap;
 import com.vividsolutions.jts.geom.LineString;
 import spark.Request;
 import spark.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static spark.Spark.halt;
@@ -25,13 +29,18 @@ import static spark.Spark.halt;
  * Controller for trip patterns.
  */
 public class PatternsController {
+    private static final Logger LOG = LoggerFactory.getLogger(PatternsController.class);
     public static List<PatternSummary> getPatterns (Request req, Response res) {
-        List<String> feeds = new ArrayList<>();
+        List<FeedSource> feeds = new ArrayList<>();
 
         if (req.queryParams("feed") != null) {
             for (String feedId : req.queryParams("feed").split(",")){
-                if (ApiMain.getFeedSource(feedId) != null) {
-                    feeds.add(feedId);
+                try {
+                    FeedSource feedSource = ApiMain.getFeedSource(feedId);
+                    if (feedSource != null) feeds.add(feedSource);
+                } catch (Exception e) {
+                    LOG.error("Error retrieving feed " + feedId, e);
+                    halt(404, "Error retrieving feed " + feedId);
                 }
             }
             if (feeds.size() == 0 || feeds.size() > 1){
@@ -45,7 +54,7 @@ public class PatternsController {
         // grab the route
         if (req.queryParams("route") == null) halt(400, "Must specify route");
 
-        FeedSource source = ApiMain.getFeedSource(feeds.get(0));
+        FeedSource source = feeds.get(0);
         if (source == null) halt(404, "No such feed");
         GTFSFeed feed = source.feed;
 
