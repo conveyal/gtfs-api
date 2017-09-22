@@ -2,64 +2,69 @@ package com.conveyal.gtfs.api.controllers;
 
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.api.models.FeedSource;
-import com.conveyal.gtfs.api.util.GeomUtil;
-import com.conveyal.gtfs.model.*;
-
-import com.google.common.collect.Iterables;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-
 import com.conveyal.gtfs.api.ApiMain;
-
+import com.conveyal.gtfs.api.models.FeedSource;
+import com.conveyal.gtfs.model.Frequency;
+import com.conveyal.gtfs.model.Route;
+import com.conveyal.gtfs.model.StopTime;
+import com.conveyal.gtfs.model.Trip;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Maps;
-
-import static spark.Spark.*;
+import static spark.Spark.halt;
 
 /**
  * Created by landon on 2/4/16.
  */
 public class TripsController {
+    private static final Logger LOG = LoggerFactory.getLogger(TripsController.class);
+
     public static Double radius = 1.0; // default 1 km search radius
     public static Object getTrips(Request req, Response res){
 
         List<TripSummary> trips = new ArrayList<>();
-        List<String> feeds = new ArrayList();
+        List<FeedSource> feeds = new ArrayList();
 
         if (req.queryParams("feed") != null) {
 
             for (String feedId : req.queryParams("feed").split(",")){
-                if (ApiMain.getFeedSource(feedId) != null) {
-                    feeds.add(feedId);
+                try {
+                    FeedSource feedSource = ApiMain.getFeedSource(feedId);
+                    if (feedSource != null) {
+                        feeds.add(feedSource);
+                    }
+                } catch (Exception e) {
+                    LOG.error("Error retrieving feed", e);
+                    halt(400, e.getMessage());
                 }
             }
             if (feeds.size() == 0){
-                return "Must specify valid feed id.";
+                halt(404, "Must specify valid feed id.");
             }
             // If feed is only param.
             else if (req.queryParams().size() == 1) {
-                for (String feedId : req.queryParams("feed").split(",")){
-                    GTFSFeed feed = ApiMain.getFeedSource(feedId).feed;
-                    feed.trips.values().stream().map(t -> new TripSummary(t, feed)).forEach(trips::add);
-                }
+                feeds.forEach(feedSource -> {
+                    feedSource.feed.trips.values().stream().forEach(t -> {
+                        trips.add(new TripSummary(t, feedSource.feed));
+                    });
+                });
             }
         }
         else{
-//            res.body("Must specify valid feed id.");
-            return "Must specify valid feed id.";
-//            halt(404, "Must specify valid feed id.");
+            halt(404, "Must specify valid feed id.");
         }
 
 
         // Continue through params
         if (req.params("id") != null) {
-            GTFSFeed feed = ApiMain.getFeedSource(feeds.get(0)).feed;
+            GTFSFeed feed = feeds.get(0).feed;
             Trip t = feed.trips.get(req.params("id"));
             if(t != null) // && currentUser(req).hasReadPermission(s.projectId))
                 return new TripSummary(t, feed);
@@ -69,39 +74,13 @@ public class TripsController {
         else if (req.queryParams("route") != null){
             String route_id = req.queryParams("route");
             System.out.println(route_id);
-            GTFSFeed feed = ApiMain.getFeedSource(feeds.get(0)).feed;
+            GTFSFeed feed = feeds.get(0).feed;
             List<Trip> tripsForRoute = feed.trips.values()
                     .stream().filter(t -> t.route_id.equals(route_id)).collect(Collectors.toList());
             System.out.println(tripsForRoute.toString());
             tripsForRoute.stream().map(t -> new TripSummary(t, feed)).forEach(trips::add);
             return trips;
         }
-//        // bounding box
-//        else if (req.queryParams("max_lat") != null && req.queryParams("max_lon") != null && req.queryParams("min_lat") != null && req.queryParams("min_lon") != null){
-//
-//            Coordinate maxCoordinate = new Coordinate(Double.valueOf(req.queryParams("max_lon")), Double.valueOf(req.queryParams("max_lat")));
-//            Coordinate minCoordinate = new Coordinate(Double.valueOf(req.queryParams("min_lon")), Double.valueOf(req.queryParams("min_lat")));
-//            Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
-//
-//            for (String feedId : feeds) {
-//                List<Trip> searchResults = ApiMain.getFeedSource(feedId).stopIndex.query(searchEnvelope);
-//                trips.addAll(searchResults);
-//            }
-//            return trips;
-//        }
-//        // lat lon + radius
-//        else if (req.queryParams("lat") != null && req.queryParams("lon") != null){
-//            Coordinate latLon = new Coordinate(Double.valueOf(req.queryParams("lon")), Double.valueOf(req.queryParams("lat")));
-//            if (req.queryParams("radius") != null){
-//                TripsController.radius = Double.valueOf(req.queryParams("radius"));
-//            }
-//            Envelope searchEnvelope = GeomUtil.getBoundingBox(latLon, radius);
-//            for (String feedId : feeds) {
-//                List<Trip> searchResults = ApiMain.getFeedSource(feedId).stopIndex.query(searchEnvelope);
-//                trips.addAll(searchResults);
-//            }
-//            return trips;
-//        }
 
         return null;
     }

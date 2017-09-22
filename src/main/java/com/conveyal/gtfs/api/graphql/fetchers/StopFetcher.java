@@ -121,7 +121,7 @@ public class StopFetcher {
             return Collections.emptyList();
         }
 
-        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(pattern.feedUniqueId);
         if (fs == null) return null;
 
         return fs.feed.getOrderedStopListForTrip(pattern.entity.associatedTrips.get(0))
@@ -139,7 +139,7 @@ public class StopFetcher {
             return 0L;
         }
 
-        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(pattern.feedUniqueId);
         if (fs == null) return null;
 
         return fs.feed.getOrderedStopListForTrip(pattern.entity.associatedTrips.get(0))
@@ -148,7 +148,7 @@ public class StopFetcher {
 
     public static List<WrappedGTFSEntity<Stop>> fromFeed(DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(fi.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(fi.feedUniqueId);
         if (fs == null) return null;
 
         Collection<Stop> stops = fs.feed.stops.values();
@@ -178,7 +178,7 @@ public class StopFetcher {
 
     public static Long fromFeedCount(DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> fi = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(fi.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(fi.feedUniqueId);
         if (fs == null) return null;
 
         Collection<Stop> stops = fs.feed.stops.values();

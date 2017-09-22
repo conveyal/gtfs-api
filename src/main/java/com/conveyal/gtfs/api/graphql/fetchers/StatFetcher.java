@@ -27,7 +27,7 @@ import static com.conveyal.gtfs.api.util.GraphQLUtil.argumentDefined;
 public class StatFetcher {
     public static StopStatistic fromStop(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(stop.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(stop.feedUniqueId);
         if (fs == null) return null;
 
         if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
@@ -48,7 +48,7 @@ public class StatFetcher {
 
     public static RouteStatistic fromRoute(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(route.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(route.feedUniqueId);
         if (fs == null) return null;
 
         if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
@@ -69,7 +69,7 @@ public class StatFetcher {
 
     public static PatternStatistic fromPattern(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Pattern> pattern = (WrappedGTFSEntity<Pattern>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(pattern.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(pattern.feedUniqueId);
         if (fs == null) return null;
 
         if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
@@ -90,7 +90,7 @@ public class StatFetcher {
 
     public static List<TransferPerformanceSummary> getTransferPerformance(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Stop> stop = (WrappedGTFSEntity<Stop>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(stop.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(stop.feedUniqueId);
         if (fs == null) return null;
 
         if (argumentDefined(env, "date")) {
@@ -104,7 +104,7 @@ public class StatFetcher {
 
     public static FeedStatistic fromFeed(DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> feedInfo = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(feedInfo.feedUniqueId);
         if (fs == null) return null;
 
         if (argumentDefined(env, "date") && argumentDefined(env, "from") && argumentDefined(env, "to")) {
