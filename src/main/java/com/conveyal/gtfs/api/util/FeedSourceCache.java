@@ -7,7 +7,8 @@ import com.conveyal.gtfs.api.models.FeedSource;
 import java.io.File;
 
 /**
- * Created by matthewc on 4/14/17.
+ * TODO add description. In what way does this differ from GTFSCache?
+ * Why is this the only other subclass of BaseGTFSCache?
  */
 public class FeedSourceCache extends BaseGTFSCache<FeedSource> {
     public FeedSourceCache(String bucket, File cacheDir) {

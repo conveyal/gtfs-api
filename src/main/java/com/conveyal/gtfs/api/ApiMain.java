@@ -26,6 +26,10 @@ public class ApiMain {
     public static ConcurrentHashSet<String> registeredFeedSources = new ConcurrentHashSet<>();
 
     public static final Logger LOG = LoggerFactory.getLogger(ApiMain.class);
+
+    /**
+     * Start a Spark HTTP server providing the GraphQL API.
+     */
     public static void main(String[] args) throws Exception {
         FileInputStream in;
 

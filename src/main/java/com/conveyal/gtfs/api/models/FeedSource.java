@@ -19,7 +19,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by landon on 2/8/16.
+ * This is not at all the same thing as a FeedSource in Conveyal Data Manager.
+ * It's not an API model class. It's a wrapper around a GTFSFeed with extra indexes and stats.
  */
 public class FeedSource {
     private static final Logger LOG = LoggerFactory.getLogger(FeedSource.class);
