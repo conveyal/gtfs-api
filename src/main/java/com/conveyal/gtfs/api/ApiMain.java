@@ -72,18 +72,22 @@ public class ApiMain {
 
     public static FeedSource getFeedSource (String id) throws Exception {
         FeedSource f = cache.get(id);
+        // When constructed, the FeedSource object sets its ID to the short FeedId of that feed.
+        // We overwrite it here with the longer complete feed unique ID that was used to fetch the feed.
+        // This is a complete hack of a "solution" but seems to get the API working.
+        // The core problem appears to be an assumption in the GTFS cache classes that the GTFS object
+        // alone contains all required information, while in fact we need the longer unique ID.
+        f.id = id;
         registeredFeedSources.add(id);
         return f;
     }
 
-    /** convenience function to get a feed source without throwing checked exceptions, for example for use in lambdas */
+    /** Convenience function to get a feed source without throwing checked exceptions, for example for use in lambdas */
     public static FeedSource getFeedSourceWithoutExceptions (String id) {
       try {
-        FeedSource f = cache.get(id);
-        registeredFeedSources.add(id);
-        return f;
+        return getFeedSource(id);
       } catch (Exception e) {
-        LOG.error("Error retriveving from cache feed " + id, e);
+        LOG.error("Error retrieving from cache feed " + id, e);
         return null;
       }
     }
