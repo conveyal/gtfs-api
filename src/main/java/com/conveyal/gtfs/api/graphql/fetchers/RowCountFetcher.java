@@ -69,9 +69,8 @@ public class RowCountFetcher implements DataFetcher {
     }
 
     /**
-     *
-     * @param tableName
-     * @return
+     * Convenience method to create a field in a GraphQL schema that fetches the number of rows in a table.
+     * Must be on a type that has a "namespace" field for context.
      */
     public static GraphQLFieldDefinition field(String tableName) {
         return newFieldDefinition()
