@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Fetch the summary row for a particular loaded feed, based on its namespace.
+ * This essentially gets the row from the top-level summary table of all feeds that have been loaded into the database.
+ */
 public class FeedFetcher implements DataFetcher {
 
     public static final Logger LOG = LoggerFactory.getLogger(DataFetcher.class);

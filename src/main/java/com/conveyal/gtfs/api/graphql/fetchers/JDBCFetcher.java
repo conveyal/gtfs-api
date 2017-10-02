@@ -1,14 +1,8 @@
 package com.conveyal.gtfs.api.graphql.fetchers;
 
-import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.GraphQLMain;
 import com.conveyal.gtfs.api.graphql.GraphQLGtfsSchema;
-import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.model.Entity;
-import com.conveyal.gtfs.model.Route;
-import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.storage.SqlLibrary;
-import com.sun.media.jai.util.DataBufferUtils;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
@@ -17,7 +11,6 @@ import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.crypto.Data;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,6 +81,8 @@ public class JDBCFetcher implements DataFetcher {
         Map<String, Object> map = (Map<String, Object>) environment.getSource();
         String namespace = (String) map.get("namespace");
         StringBuilder sqlBuilder = new StringBuilder();
+        // TODO select only the specified fields using environment.getFields(), for now we just get them all.
+        // The advantage of selecting * is that we don't need to validate the field names.
         sqlBuilder.append(String.format("select * from %s.%s", namespace, tableName));
         List<String> conditions = new ArrayList<>();
         if (environment.getSource() instanceof Entity) {

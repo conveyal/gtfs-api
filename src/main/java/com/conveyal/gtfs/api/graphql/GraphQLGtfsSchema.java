@@ -1,19 +1,13 @@
 package com.conveyal.gtfs.api.graphql;
 
 import com.conveyal.gtfs.api.graphql.fetchers.*;
-import com.conveyal.gtfs.api.graphql.types.FeedType;
-import com.conveyal.gtfs.api.graphql.types.PatternType;
-import com.conveyal.gtfs.api.graphql.types.RouteType;
-import com.conveyal.gtfs.api.graphql.types.StopTimeType;
-import com.conveyal.gtfs.api.graphql.types.StopType;
-import com.conveyal.gtfs.api.graphql.types.TripType;
+import com.conveyal.gtfs.loader.StringField;
 import graphql.Scalars;
 import graphql.schema.*;
 
 import static com.conveyal.gtfs.api.util.GraphQLUtil.*;
 import static graphql.Scalars.GraphQLFloat;
 import static graphql.Scalars.GraphQLInt;
-import static graphql.Scalars.GraphQLLong;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
 
@@ -171,6 +165,34 @@ public class GraphQLGtfsSchema {
             .build();
 
     /**
+     * The GraphQL API type representing counts of rows in the various GTFS tables.
+     * The context here for fetching subfields is the feedType. A special dataFetcher is used to pass that identical
+     * context down.
+     */
+    public static GraphQLObjectType rowCountsType = newObject().name("rowCounts")
+            .description("Counts of rows in the various GTFS tables.")
+            .field(RowCountFetcher.field("stops"))
+            .field(RowCountFetcher.field("trips"))
+            .field(RowCountFetcher.field("routes"))
+            .field(RowCountFetcher.field("stop_times"))
+            .field(RowCountFetcher.field("agency"))
+            .field(RowCountFetcher.field("calendar"))
+            .field(RowCountFetcher.field("calendar_dates"))
+            .field(RowCountFetcher.field("errors"))
+            .build();
+
+    /**
+     * GraphQL does not have a type for arbitrary maps (String -> X). Such maps must be expressed as a list of
+     * key-value pairs. This is probably intended to protect us from ourselves (sending untyped data) but it just
+     * leads to silly workarounds like this.
+     */
+    public static GraphQLObjectType errorCountType = newObject().name("errorCount")
+            .description("Quantity of validation errors of a specific type.")
+            .field(string("type"))
+            .field(intt("count"))
+            .build();
+
+    /**
      * The GraphQL API type representing entries in the top-level table listing all the feeds imported into a gtfs-api
      * database, and with sub-fields for each table of GTFS entities within a single feed.
      */
@@ -182,6 +204,18 @@ public class GraphQLGtfsSchema {
             .field(MapFetcher.field("filename"))
             .field(MapFetcher.field("md5"))
             .field(MapFetcher.field("sha1"))
+            // A field containing row counts for every table.
+            .field(newFieldDefinition()
+                .name("row_counts")
+                .type(rowCountsType)
+                .dataFetcher(new SourceObjectFetcher())
+                .build())
+            // A field containing counts for each type of error independently.
+            .field(newFieldDefinition()
+                .name("error_counts")
+                .type(new GraphQLList(errorCountType))
+                .dataFetcher(new ErrorCountFetcher())
+                .build())
             // Then the fields for the sub-tables within the feed.
             .field(newFieldDefinition()
                 .name("errors")

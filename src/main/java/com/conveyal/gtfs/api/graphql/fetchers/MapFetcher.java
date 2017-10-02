@@ -12,6 +12,8 @@ import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 
 /**
  * This just grabs an entry out of a Map<String, Object>
+ * It allows pulling a single field out of the result of a DataFetcher that always returns all fields
+ * (like our JDBC SQL fetcher).
  */
 public class MapFetcher implements DataFetcher {
 

@@ -4,7 +4,6 @@ import com.conveyal.gtfs.GTFS;
 import com.conveyal.gtfs.api.controllers.GraphQLController;
 import com.conveyal.gtfs.api.controllers.JsonTransformer;
 import com.conveyal.gtfs.api.util.CorsFilter;
-import com.conveyal.gtfs.storage.SqlLibrary;
 import spark.ResponseTransformer;
 
 import javax.sql.DataSource;
@@ -35,6 +34,9 @@ public class GraphQLMain {
 
     public static DataSource dataSource;
 
+    /**
+     * @param args to use the local postgres database, jdbc:postgresql://localhost/gtfs
+     */
     public static void main (String[] args) {
         String databaseUrl = args[0];
         String apiPrefix = "/";
