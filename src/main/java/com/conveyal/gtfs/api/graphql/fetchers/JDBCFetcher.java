@@ -92,7 +92,8 @@ public class JDBCFetcher implements DataFetcher {
             }
         }
         for (String key : environment.getArguments().keySet()) {
-            if ("limit".equals(key)) continue;
+            // Limit and Offset arguments are for pagination. All others become "where X in A, B, C" clauses.
+            if ("limit".equals(key) || "offset".equals(key)) continue;
             List<String> values = (List<String>) environment.getArguments().get(key);
             if (values != null && !values.isEmpty()) conditions.add(makeInClause(key, values));
         }
@@ -108,6 +109,10 @@ public class JDBCFetcher implements DataFetcher {
             limit = MAX_ROWS_TO_FETCH;
         }
         sqlBuilder.append(" limit " + limit);
+        Integer offset = (Integer) environment.getArguments().get("offset");
+        if (offset != null && offset >= 0) {
+            sqlBuilder.append(" offset " + offset);
+        }
         Connection connection = null;
         try {
             connection = GraphQLMain.dataSource.getConnection();
