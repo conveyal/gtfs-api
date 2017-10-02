@@ -79,7 +79,7 @@ public class PatternFetcher {
     }
     public static List<WrappedGTFSEntity<Pattern>> fromRoute(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(route.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(route.feedUniqueId);
         if (fs == null) return null;
 
         List<String> stopIds = env.getArgument("stop_id");
@@ -108,7 +108,7 @@ public class PatternFetcher {
 
     public static Long fromRouteCount(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Route> route = (WrappedGTFSEntity<Route>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(route.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(route.feedUniqueId);
         if (fs == null) return null;
 
         return fs.feed.patterns.values().stream()
@@ -118,7 +118,7 @@ public class PatternFetcher {
 
     public static WrappedGTFSEntity<Pattern> fromTrip(DataFetchingEnvironment env) {
         WrappedGTFSEntity<Trip> trip = (WrappedGTFSEntity<Trip>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(trip.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(trip.feedUniqueId);
         if (fs == null) return null;
 
         Pattern patt = fs.feed.patterns.get(fs.feed.tripPatternMap.get(trip.entity.trip_id));

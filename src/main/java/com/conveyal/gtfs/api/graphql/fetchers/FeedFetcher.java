@@ -87,7 +87,7 @@ public class FeedFetcher implements DataFetcher {
 
     public static Geometry getMergedBuffer(DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> feedInfo = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(feedInfo.feedUniqueId);
         if (fs == null) return null;
 
         return fs.feed.getMergedBuffers();
@@ -95,7 +95,7 @@ public class FeedFetcher implements DataFetcher {
 
     public static WrappedGTFSEntity<FeedInfo> forWrappedGtfsEntity (DataFetchingEnvironment env) {
         WrappedGTFSEntity<FeedInfo> feedInfo = (WrappedGTFSEntity<FeedInfo>) env.getSource();
-        FeedSource fs = ApiMain.getFeedSource(feedInfo.feedUniqueId);
+        FeedSource fs = ApiMain.getFeedSourceWithoutExceptions(feedInfo.feedUniqueId);
         if (fs == null) return null;
 
         return getFeedInfo(fs);

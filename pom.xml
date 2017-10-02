@@ -4,10 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- gtfs-api release 1.0.0 uses gtfs-lib 3 which has RDBMS support, but still provides the API on top of old MapDB storage. -->
     <groupId>com.conveyal</groupId>
     <artifactId>gtfs-api</artifactId>
-    <!-- version 0.7 will have SQL support, unlike 0.6  -->
-    <version>0.7-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
 
     <!-- Define where the source code for this project lives -->
     <scm>
@@ -134,7 +134,7 @@
         <dependency>
             <groupId>com.conveyal</groupId>
             <artifactId>gtfs-lib</artifactId>
-            <version>3.0.0-SNAPSHOT</version>
+            <version>3.1.0-SNAPSHOT</version>
         </dependency>
 
         <!-- the core, which includes Streaming API, shared low-level abstractions (but NOT data-binding) -->

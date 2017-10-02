@@ -1,6 +1,5 @@
 package com.conveyal.gtfs.api.controllers;
 
-import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.api.ApiMain;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.model.StopTime;
@@ -22,14 +21,18 @@ public class StopTimesController {
             halt(400, "Please specify a feed and trip");
         }
 
-        FeedSource feed = ApiMain.getFeedSource(req.queryParams("feed"));
+        try {
+            FeedSource feed = ApiMain.getFeedSource(req.queryParams("feed"));
 
-        if (feed == null) halt(404, "Feed not found");
+            if (!feed.feed.trips.containsKey(req.params("id"))) halt(404, "Trip not found!");
 
-        if (!feed.feed.trips.containsKey(req.params("id"))) halt(404, "Trip not found!");
+            List<StopTime> ret = new ArrayList<>();
+            feed.feed.getOrderedStopTimesForTrip(req.params("id")).forEach(ret::add);
+            return ret;
+        } catch (Exception e) {
+            halt(404, "Feed not found. " + e.getMessage());
 
-        List<StopTime> ret = new ArrayList<>();
-        feed.feed.getOrderedStopTimesForTrip(req.params("id")).forEach(ret::add);
-        return ret;
+            return null;
+        }
     }
 }
