@@ -124,10 +124,11 @@ public class JDBCFetcher implements DataFetcher {
                 int nColumns = meta.getColumnCount();
                 // Iterate over result rows
                 while (resultSet.next()) {
-                    // Create a Map to hold the contents of this row, injecting the feed_id into every map
+                    // Create a Map to hold the contents of this row, injecting the sql schema namespace into every map
                     Map<String, Object> resultMap = new HashMap<>();
                     resultMap.put("namespace", namespace);
-                    for (int i = 1; i < nColumns; i++) {
+                    // One-based iteration: start at one and use <=.
+                    for (int i = 1; i <= nColumns; i++) {
                         resultMap.put(meta.getColumnName(i), resultSet.getObject(i));
                     }
                     results.add(resultMap);
