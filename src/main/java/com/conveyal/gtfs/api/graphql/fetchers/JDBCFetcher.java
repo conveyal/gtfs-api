@@ -78,8 +78,8 @@ public class JDBCFetcher implements DataFetcher {
         // So it should always be represented as a map with a namespace key.
 
         // GetSource is the context in which this this DataFetcher has been created, in this case a map representing the parent feed.
-        Map<String, Object> map = (Map<String, Object>) environment.getSource();
-        String namespace = (String) map.get("namespace");
+        Map<String, Object> parentEntityMap = environment.getSource();
+        String namespace = (String) parentEntityMap.get("namespace");
         StringBuilder sqlBuilder = new StringBuilder();
         // TODO select only the specified fields using environment.getFields(), for now we just get them all.
         // The advantage of selecting * is that we don't need to validate the field names.
