@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.api.graphql;
 
 import com.conveyal.gtfs.api.graphql.fetchers.*;
+import com.conveyal.gtfs.api.graphql.types.StopTimeType;
 import com.conveyal.gtfs.loader.StringField;
 import graphql.Scalars;
 import graphql.schema.*;
@@ -71,24 +72,21 @@ public class GraphQLGtfsSchema {
 
     // Represents rows from stop_times.txt
     public static final GraphQLObjectType stopTimeType = newObject().name("stopTime")
-            .field(intt("arrival_time"))
-            .field(intt("departure_time"))
-            .field(intt("stop_sequence"))
-            .field(string("stop_id"))
-            .field(string("stop_headsign"))
-            .field(doublee("shape_dist_traveled"))
-//            .field(feed())
-//            .field(newFieldDefinition()
-//                .name("trip")
-//                .type(GraphQLGtfsSchema.tripType)
-//                .dataFetcher(TripDataFetcher::fromStopTime)
-//                .argument(stringArg("date"))
-//                .argument(longArg("from"))
-//                .argument(longArg("to"))
-//                .build()
-//            )
+            .field(MapFetcher.field("trip_id"))
+            .field(MapFetcher.field("stop_id"))
+            .field(MapFetcher.field("stop_sequence", GraphQLInt))
+            .field(MapFetcher.field("arrival_time", GraphQLInt))
+            .field(MapFetcher.field("departure_time", GraphQLInt))
+            .field(MapFetcher.field("stop_headsign"))
+            .field(MapFetcher.field("shape_dist_traveled", GraphQLFloat))
             .build();
 
+    // Represents rows from stop_times.txt
+    public static final GraphQLObjectType patternStopType = newObject().name("patternStop")
+            .field(MapFetcher.field("pattern_id"))
+            .field(MapFetcher.field("stop_id"))
+            .field(MapFetcher.field("stop_sequence", GraphQLInt))
+            .build();
 
     // Represents rows from routes.txt
     public static final GraphQLObjectType routeType = newObject().name("route")
@@ -192,6 +190,27 @@ public class GraphQLGtfsSchema {
             .field(intt("count"))
             .build();
 
+
+    /**
+     * The GraphQL API type representing a unique sequence of stops on a route. This is used to group trips together.
+     */
+    public static GraphQLObjectType patternType = newObject().name("pattern")
+            .description("A sequence of stops that characterizes a set of trips on a single route.")
+            .field(MapFetcher.field("pattern_id"))
+            .field(MapFetcher.field("route_id"))
+            .field(MapFetcher.field("description"))
+            .field(newFieldDefinition()
+                .name("stops")
+                .type(new GraphQLList(patternStopType))
+                .dataFetcher(new JDBCFetcher("pattern_stops")) // FIXME how do we get the pattern ID in here?
+                .build())
+            .field(newFieldDefinition()
+                .name("trips")
+                .type(new GraphQLList(tripType))
+                .dataFetcher(new JDBCFetcher("trips")) // FIXME how do we get the pattern ID in here? Extra param.
+                .build())
+            .build();
+
     /**
      * The GraphQL API type representing entries in the top-level table listing all the feeds imported into a gtfs-api
      * database, and with sub-fields for each table of GTFS entities within a single feed.
@@ -215,6 +234,13 @@ public class GraphQLGtfsSchema {
                 .name("error_counts")
                 .type(new GraphQLList(errorCountType))
                 .dataFetcher(new ErrorCountFetcher())
+                .build())
+            .field(newFieldDefinition()
+                .name("patterns")
+                .type(new GraphQLList(patternType))
+                .argument(multiStringArg("pattern_id"))
+                // DataFetchers can either be class instances implementing the interface, or a static function reference
+                .dataFetcher(new JDBCFetcher("patterns"))
                 .build())
             // Then the fields for the sub-tables within the feed.
             .field(newFieldDefinition()
