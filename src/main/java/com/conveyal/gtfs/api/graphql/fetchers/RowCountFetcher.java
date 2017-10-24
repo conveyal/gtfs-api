@@ -2,6 +2,7 @@ package com.conveyal.gtfs.api.graphql.fetchers;
 
 import com.conveyal.gtfs.api.GraphQLMain;
 import com.conveyal.gtfs.api.graphql.GraphQLGtfsSchema;
+import com.conveyal.gtfs.loader.JDBCTableReader;
 import com.conveyal.gtfs.model.Entity;
 import graphql.Scalars;
 import graphql.language.Field;
@@ -59,7 +60,7 @@ public class RowCountFetcher implements DataFetcher {
         } catch (SQLException e) {
             // In case the table doesn't exist in this feed, just return zero and don't print noise to the log.
             // Unfortunately JDBC doesn't seem to define reliable error codes.
-            if (!"42P01".equals(e.getSQLState())) {
+            if (! JDBCTableReader.SQL_STATE_UNDEFINED_TABLE.equals(e.getSQLState())) {
                 e.printStackTrace();
             }
         } finally {
@@ -72,12 +73,19 @@ public class RowCountFetcher implements DataFetcher {
      * Convenience method to create a field in a GraphQL schema that fetches the number of rows in a table.
      * Must be on a type that has a "namespace" field for context.
      */
-    public static GraphQLFieldDefinition field(String tableName) {
+    public static GraphQLFieldDefinition field (String fieldName, String tableName) {
         return newFieldDefinition()
-                .name(tableName)
+                .name(fieldName)
                 .type(Scalars.GraphQLInt)
                 .dataFetcher(new RowCountFetcher(tableName))
                 .build();
+    }
+
+    /**
+     * For cases where the GraphQL field name is the same as the table name itself.
+     */
+    public static GraphQLFieldDefinition field (String tableName) {
+        return field(tableName, tableName);
     }
 
 }

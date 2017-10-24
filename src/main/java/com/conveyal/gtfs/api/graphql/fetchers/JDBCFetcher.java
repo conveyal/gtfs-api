@@ -2,7 +2,6 @@ package com.conveyal.gtfs.api.graphql.fetchers;
 
 import com.conveyal.gtfs.api.GraphQLMain;
 import com.conveyal.gtfs.api.graphql.GraphQLGtfsSchema;
-import com.conveyal.gtfs.model.Entity;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
@@ -32,24 +31,40 @@ public class JDBCFetcher implements DataFetcher {
     public static final int DEFAULT_ROWS_TO_FETCH = 50;
     public static final int MAX_ROWS_TO_FETCH = 500;
 
-    String tableName;
+    public final String tableName;
+    public final String parentJoinField;
 
     // Supply an SQL result row -> Object transformer
 
-    public JDBCFetcher(String tableName) {
-        this.tableName = tableName;
+    /**
+     * Constructor for tables that don't need any restriction by a where clause based on the enclosing entity.
+     * These would typically be at the topmost level, directly inside a feed rather than nested in some GTFS entity type.
+     */
+    public JDBCFetcher (String tableName) {
+        this(tableName, null);
     }
 
-    // Generate a field definition for inclusion in a GraphQL schema.
-    // Hmm, this doesn't work well because we need custom inclusion of sub-tables in each table type.
-    // We should make stock field definitions for these tables
+    /**
+     * @param tableName the database table from which to fetch rows.
+     * @param parentJoinField The field in the enclosing level of the Graphql query to use in a where clause.
+     *        This allows e.g. selecting all the stop_times within a trip, using the enclosing trip's trip_id.
+     *        If null, no such clause is added.
+     */
+    public JDBCFetcher (String tableName, String parentJoinField) {
+        this.tableName = tableName;
+        this.parentJoinField = parentJoinField;
+    }
+
+    // We can't automatically generate JDBCFetcher based field definitions for inclusion in a GraphQL schema (as we
+    // do for MapFetcher for example). This is because we need custom inclusion of sub-tables in each table type.
+    // Still maybe we could make the most basic ones this way (automatically). Keeping this function as an example.
     public static GraphQLFieldDefinition field (String tableName) {
         return newFieldDefinition()
                 .name(tableName)
                 .type(new GraphQLList(GraphQLGtfsSchema.routeType))
                 .argument(stringArg("namespace"))
                 .argument(multiStringArg("route_id"))
-                .dataFetcher(new JDBCFetcher(tableName))
+                .dataFetcher(new JDBCFetcher(tableName, null))
                 .build();
     }
 
@@ -67,12 +82,15 @@ public class JDBCFetcher implements DataFetcher {
     // from a Map<String, Object>.
     // But what are the internal GraphQL objects, i.e. what does an ExecutionResult return? Are they Map<String, Object>?
 
-
-    // TODO another parameter for where clause key in the parent-object
     @Override
     public List<Map<String, Object>> get (DataFetchingEnvironment environment) {
+
+        // This will contain one Map<String, Object> for each row fetched from the database table.
         List<Map<String, Object>> results = new ArrayList<>();
+
         // Apparently you can't get the arguments from the parent - how do you have arguments on sub-fields?
+        // It looks like you have to redefine the argument on each subfield and pass it explicitly in the Graphql request.
+
         // String namespace = environment.getArgument("namespace"); // This is going to be the unique prefix, not the feedId in the usual sense
         // This DataFetcher only makes sense when the enclosing parent object is a feed or something in a feed.
         // So it should always be represented as a map with a namespace key.
@@ -81,15 +99,23 @@ public class JDBCFetcher implements DataFetcher {
         Map<String, Object> parentEntityMap = environment.getSource();
         String namespace = (String) parentEntityMap.get("namespace");
         StringBuilder sqlBuilder = new StringBuilder();
-        // TODO select only the specified fields using environment.getFields(), for now we just get them all.
+
+        // We could select only the requested fields by examining environment.getFields(), but we just get them all.
         // The advantage of selecting * is that we don't need to validate the field names.
+        // All the columns will be loaded into the Map<String, Object>,
+        // but only the requested fields will be fetched from that Map using a MapFetcher.
         sqlBuilder.append(String.format("select * from %s.%s", namespace, tableName));
+
+        // We will build up additional sql clauses in this List.
         List<String> conditions = new ArrayList<>();
-        if (environment.getSource() instanceof Entity) {
-            Entity source = (Entity) environment.getSource();
-            if (source != null) {
-                conditions.add(String.join(" = ", source.getId(), source.getId())); // FIXME should be getting field name, not contents
-            }
+
+        // If we are fetching an item nested within a GTFS entity in the Graphql query, we want to add an SQL "where"
+        // clause. This could conceivably be done automatically, but it's clearer to just express the intent.
+        // Note, this is assuming the type of the field in the parent is a string.
+        if (parentJoinField != null) {
+            Map<String, Object> enclosingEntity = environment.getSource();
+            // FIXME SQL injection: enclosing entity's ID could contain malicious character sequences; quote and sanitize the string.
+            conditions.add(String.join(" = ", parentJoinField, quote(enclosingEntity.get(parentJoinField).toString())));
         }
         for (String key : environment.getArguments().keySet()) {
             // Limit and Offset arguments are for pagination. All others become "where X in A, B, C" clauses.
@@ -165,6 +191,12 @@ public class JDBCFetcher implements DataFetcher {
         sb.append("'");
         sb.append(string);
         sb.append("'");
+    }
+
+    private String quote (String string) {
+        StringBuilder sb = new StringBuilder();
+        quote(sb, string);
+        return sb.toString();
     }
 
 }

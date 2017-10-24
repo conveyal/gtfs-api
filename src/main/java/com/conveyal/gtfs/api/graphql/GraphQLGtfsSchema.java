@@ -46,14 +46,13 @@ public class GraphQLGtfsSchema {
             .field(MapFetcher.field("block_id"))
             .field(MapFetcher.field("direction_id", GraphQLInt))
             .field(MapFetcher.field("route_id"))
-            // TODO add patterns
-//            .field(newFieldDefinition()
-//                    .name("stop_times")
-//                    .type(new GraphQLTypeReference("stopTime")) // forward reference as yet undefined stopTimeType
-//                    .argument(multiStringArg("stop_id"))
-//                    .dataFetcher(new JDBCFetcher("stop_times")) // Add param for where-clause in parent object
-//                    .build()
-//            )
+            .field(newFieldDefinition()
+                    .name("stop_times")
+                    // forward reference to the as yet undefined stopTimeType
+                    .type(new GraphQLList(new GraphQLTypeReference("stopTime")))
+                    .dataFetcher(new JDBCFetcher("stop_times", "trip_id"))
+                    .build()
+            )
 //            // some pseudo-fields to reduce the amount of data that has to be fetched over GraphQL to summarize
 //            .field(newFieldDefinition()
 //                    .name("start_time")
@@ -81,7 +80,12 @@ public class GraphQLGtfsSchema {
             .field(MapFetcher.field("shape_dist_traveled", GraphQLFloat))
             .build();
 
-    // Represents rows from stop_times.txt
+    /**
+     * Represents each stop in a list of stops within a pattern.
+     * We could return just a list of StopIDs within the pattern (a JSON array of strings) but
+     * that structure would prevent us from joining tables and returning additional stop details
+     * like lat and lon, or pickup and dropoff types if we add those to the pattern signature.
+     */
     public static final GraphQLObjectType patternStopType = newObject().name("patternStop")
             .field(MapFetcher.field("pattern_id"))
             .field(MapFetcher.field("stop_id"))
@@ -102,17 +106,19 @@ public class GraphQLGtfsSchema {
             .field(MapFetcher.field("route_type"))
             .field(MapFetcher.field("route_color"))
             .field(MapFetcher.field("route_text_color"))
-//            .field(newFieldDefinition()
-//                    .type(new GraphQLList(GraphQLGtfsSchema.tripType))
-//                    .name("trips")
-//                    .dataFetcher(new JDBCFetcher("trips"))
-//                    .build()
-//            )
-//            .field(newFieldDefinition()
-//                    .type(GraphQLLong)
-//                    .name("trip_count")
-//                    .dataFetcher(TripDataFetcher::fromRouteCount) // TODO proper generic SQL row counter "select count(*) from X where Y = Z"
-//                    .build())
+            .field(newFieldDefinition()
+                    .type(new GraphQLList(tripType))
+                    .name("trips")
+                    .dataFetcher(new JDBCFetcher("trips", "route_id"))
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .type(new GraphQLList(new GraphQLTypeReference("pattern")))
+                    .name("patterns")
+                    .dataFetcher(new JDBCFetcher("patterns", "route_id"))
+                    .build()
+            )
+            .field(RowCountFetcher.field("count", "routes"))
             .build();
 
     // Represents rows from stops.txt
@@ -202,12 +208,12 @@ public class GraphQLGtfsSchema {
             .field(newFieldDefinition()
                 .name("stops")
                 .type(new GraphQLList(patternStopType))
-                .dataFetcher(new JDBCFetcher("pattern_stops")) // FIXME how do we get the pattern ID in here?
+                .dataFetcher(new JDBCFetcher("pattern_stops", "pattern_id"))
                 .build())
             .field(newFieldDefinition()
                 .name("trips")
                 .type(new GraphQLList(tripType))
-                .dataFetcher(new JDBCFetcher("trips")) // FIXME how do we get the pattern ID in here? Extra param.
+                .dataFetcher(new JDBCFetcher("trips", "pattern_id"))
                 .build())
             .build();
 
