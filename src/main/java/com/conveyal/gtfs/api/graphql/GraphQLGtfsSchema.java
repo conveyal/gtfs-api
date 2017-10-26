@@ -9,6 +9,7 @@ import graphql.schema.*;
 import static com.conveyal.gtfs.api.util.GraphQLUtil.*;
 import static graphql.Scalars.GraphQLFloat;
 import static graphql.Scalars.GraphQLInt;
+import static graphql.Scalars.GraphQLString;
 import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
 
@@ -46,6 +47,7 @@ public class GraphQLGtfsSchema {
             .field(MapFetcher.field("block_id"))
             .field(MapFetcher.field("direction_id", GraphQLInt))
             .field(MapFetcher.field("route_id"))
+            .field(MapFetcher.field("service_id"))
             .field(MapFetcher.field("pattern_id"))
             .field(newFieldDefinition()
                     .name("stop_times")
@@ -221,6 +223,39 @@ public class GraphQLGtfsSchema {
             .build();
 
     /**
+     * Durations that a service runs on each mode of transport (route_type).
+     */
+    public static final GraphQLObjectType serviceDurationType = newObject().name("serviceDuration")
+            .field(MapFetcher.field("route_type", GraphQLInt))
+            .field(MapFetcher.field("duration_seconds", GraphQLInt))
+            .build();
+
+    /**
+     * The GraphQL API type representing a service (a service_id attached to trips to say they run on certain days).
+     */
+    public static GraphQLObjectType serviceType = newObject().name("service")
+            .description("A group of trips that all run together on certain days.")
+            .field(MapFetcher.field("service_id"))
+            .field(MapFetcher.field("n_days_active"))
+            .field(MapFetcher.field("duration_seconds"))
+            .field(newFieldDefinition()
+                    .name("dates")
+                    .type(new GraphQLList(GraphQLString))
+                    .dataFetcher(new SQLColumnFetcher<String>("service_dates", "service_id", "service_date"))
+                    .build())
+            .field(newFieldDefinition()
+                    .name("trips")
+                    .type(new GraphQLList(tripType))
+                    .dataFetcher(new JDBCFetcher("trips", "service_id"))
+                    .build())
+            .field(newFieldDefinition()
+                    .name("durations")
+                    .type(new GraphQLList(serviceDurationType))
+                    .dataFetcher(new JDBCFetcher("service_durations", "service_id"))
+                    .build())
+            .build();
+
+    /**
      * The GraphQL API type representing entries in the top-level table listing all the feeds imported into a gtfs-api
      * database, and with sub-fields for each table of GTFS entities within a single feed.
      */
@@ -244,6 +279,18 @@ public class GraphQLGtfsSchema {
                 .type(new GraphQLList(errorCountType))
                 .dataFetcher(new ErrorCountFetcher())
                 .build())
+            // A field for the errors themselves.
+            .field(newFieldDefinition()
+                    .name("errors")
+                    .type(new GraphQLList(validationErrorType))
+                    .argument(stringArg("namespace"))
+                    .argument(multiStringArg("error_type"))
+                    .argument(intArg("limit"))
+                    .argument(intArg("offset"))
+                    .dataFetcher(new JDBCFetcher("errors"))
+                    .build()
+            )
+            // A field containing all the unique stop sequences (patterns) in this feed.
             .field(newFieldDefinition()
                 .name("patterns")
                 .type(new GraphQLList(patternType))
@@ -251,17 +298,7 @@ public class GraphQLGtfsSchema {
                 // DataFetchers can either be class instances implementing the interface, or a static function reference
                 .dataFetcher(new JDBCFetcher("patterns"))
                 .build())
-            // Then the fields for the sub-tables within the feed.
-            .field(newFieldDefinition()
-                .name("errors")
-                .type(new GraphQLList(validationErrorType))
-                .argument(stringArg("namespace"))
-                .argument(multiStringArg("error_type"))
-                .argument(intArg("limit"))
-                .argument(intArg("offset"))
-                .dataFetcher(new JDBCFetcher("errors"))
-                .build()
-            )
+            // Then the fields for the sub-tables within the feed (loaded directly from GTFS).
             .field(newFieldDefinition()
                 .name("routes")
                 .type(new GraphQLList(GraphQLGtfsSchema.routeType))
@@ -275,7 +312,7 @@ public class GraphQLGtfsSchema {
             .field(newFieldDefinition()
                 .name("stops")
                 .type(new GraphQLList(GraphQLGtfsSchema.stopType))
-                .argument(stringArg("namespace"))
+                .argument(stringArg("namespace")) // FIXME maybe these nested namespace arguments are not doing anything.
                 .argument(multiStringArg("stop_id"))
                 .argument(intArg("limit"))
                 .argument(intArg("offset"))
@@ -302,6 +339,15 @@ public class GraphQLGtfsSchema {
                 .dataFetcher(new JDBCFetcher("stop_times"))
                 .build()
             )
+            .field(newFieldDefinition()
+                .name("services")
+                .argument(multiStringArg("service_id"))
+                .type(new GraphQLList(GraphQLGtfsSchema.serviceType))
+                .argument(intArg("limit")) // Todo somehow autogenerate these JDBCFetcher builders to include standard params.
+                .argument(intArg("offset"))
+                .dataFetcher(new JDBCFetcher("services"))
+                .build()
+            )
             .build();
 
     /**
@@ -315,7 +361,6 @@ public class GraphQLGtfsSchema {
                 .type(feedType)
                 // We scope to a single feed namespace, otherwise GTFS entity IDs are ambiguous.
                 .argument(stringArg("namespace"))
-                .argument(multiStringArg("error_type"))
                 .dataFetcher(new FeedFetcher())
                 .build()
             )
@@ -326,62 +371,6 @@ public class GraphQLGtfsSchema {
      * Because all of these fields are static (ugh) this must be declared after the feedQuery it references.
      */
     public static final GraphQLSchema feedBasedSchema = GraphQLSchema.newSchema().query(feedQuery).build();
-
-    private void example () {
-        newObject()
-                .name("rootQuery")
-                .description("Root level query for routes, stops, feeds, patterns, trips, and stopTimes within GTFS feeds.")
-                .field(newFieldDefinition()
-                        .name("routes")
-                        .description("List of GTFS routes optionally filtered by route_id. feed_id must be specified.")
-                        .type(new GraphQLList(routeType))
-                        .argument(multiStringArg("feed_id"))
-                        .argument(multiStringArg("route_id"))
-                        .dataFetcher(new JDBCFetcher("routes"))
-                        .build()
-                )
-                .field(newFieldDefinition()
-                        .name("stops")
-                        .type(new GraphQLList(stopType))
-                        // We actually want to accept a list of groups of these parameters
-                        // {feed_id: xyz, stop_id: [1,2,3]}, {feed_id: xyz, stop_id: [1,2,3]}
-                        // In fact maybe we shouldnt even allow arrays inside these, just one feedId and one stop or route ID.
-                        .argument(multiStringArg("feed_id"))
-                        .argument(multiStringArg("stop_id"))
-                        .argument(multiStringArg("route_id"))
-                        .argument(multiStringArg("pattern_id"))
-                        // And this stuff should be grouped into a single obfject {lat:, lon:...}
-                        .argument(floatArg("lat"))
-                        .argument(floatArg("lon"))
-                        .argument(floatArg("radius"))
-                        .argument(floatArg("max_lat"))
-                        .argument(floatArg("max_lon"))
-                        .argument(floatArg("min_lat"))
-                        .argument(floatArg("min_lon"))
-                        .dataFetcher(StopFetcher::apex)
-                        .build()
-                )
-                .field(newFieldDefinition()
-                        .name("trips")
-                        .argument(multiStringArg("feed_id"))
-                        .argument(multiStringArg("trip_id"))
-                        .argument(multiStringArg("route_id"))
-                        .dataFetcher(new JDBCFetcher("trips"))
-                        .type(new GraphQLList(tripType))
-                        .build()
-                )
-                .field(newFieldDefinition()
-                        .name("stopTimes")
-                        .argument(multiStringArg("feed_id"))
-                        .argument(multiStringArg("stop_id"))
-                        .argument(multiStringArg("trip_id"))
-                        .dataFetcher(StopTimeFetcher::apex)
-                        .type(new GraphQLList(stopTimeType))
-                        .build()
-                )
-                .build();
-    }
-
 
 
 }
