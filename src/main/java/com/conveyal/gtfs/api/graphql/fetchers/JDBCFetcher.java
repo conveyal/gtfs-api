@@ -23,7 +23,7 @@ import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 /**
  * A generic fetcher to get fields out of an SQL database table.
  */
-public class JDBCFetcher implements DataFetcher {
+public class JDBCFetcher implements DataFetcher<List<Map<String, Object>>> {
 
     public static final Logger LOG = LoggerFactory.getLogger(JDBCFetcher.class);
 
