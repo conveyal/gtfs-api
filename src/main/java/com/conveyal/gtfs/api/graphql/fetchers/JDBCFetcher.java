@@ -143,7 +143,8 @@ public class JDBCFetcher implements DataFetcher<List<Map<String, Object>>> {
         try {
             connection = GraphQLMain.dataSource.getConnection();
             Statement statement = connection.createStatement();
-            LOG.info("SQL: {}", sqlBuilder.toString());
+            // This logging produces a lot of noise during testing due to large numbers of joined sub-queries
+            // LOG.info("SQL: {}", sqlBuilder.toString());
             if (statement.execute(sqlBuilder.toString())) {
                 ResultSet resultSet = statement.getResultSet();
                 ResultSetMetaData meta = resultSet.getMetaData();
