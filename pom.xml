@@ -4,10 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- gtfs-api release 1.0.0 uses gtfs-lib 3.0.0 which has RDBMS support, but still provides the API on top of old MapDB storage. -->
     <groupId>com.conveyal</groupId>
     <artifactId>gtfs-api</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0-SNAPSHOT</version>
 
     <!-- Define where the source code for this project lives -->
     <scm>
@@ -96,6 +95,12 @@
             <name>check central first to avoid a lot of not found warnings</name>
             <url>https://repo1.maven.org/maven2</url>
         </repository>
+        <!-- The development versions of gtfs-lib are to be found in Sonatype OSS repo. -->
+        <repository>
+            <id>sonatype</id>
+            <name>sonatype snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
         <repository>
             <id>conveyal</id>
             <name>conveyal</name>
@@ -124,10 +129,11 @@
             <version>2.2</version>
         </dependency>
 
+        <!-- this API is essentially a wrapper around Conveyal GTFS-lib -->
         <dependency>
             <groupId>com.conveyal</groupId>
             <artifactId>gtfs-lib</artifactId>
-            <version>3.0.0</version>
+            <version>3.1.0</version>
         </dependency>
 
         <!-- the core, which includes Streaming API, shared low-level abstractions (but NOT data-binding) -->
@@ -180,11 +186,10 @@
             <artifactId>jackson2-geojson</artifactId>
             <version>0.8</version>
         </dependency>
-
         <dependency>
             <groupId>com.graphql-java</groupId>
             <artifactId>graphql-java</artifactId>
-            <version>2.1.0</version>
+            <version>4.2</version>
         </dependency>
     </dependencies>
 

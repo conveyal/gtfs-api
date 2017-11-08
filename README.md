@@ -8,16 +8,19 @@ Build with `mvn clean package`.
 
 `cp application.conf.template application.conf`
 
-Change `s3.feeds-bucket` to s3 bucket where feeds are stored or, to work locally, update `application.data` to local path with gtfs and switch `s3.work-offline` to `true`.
+Change `s3.feeds-bucket` to s3 bucket where feeds are stored or, to work
+ locally, update `application.data` to local path with gtfs and switch
+ `s3.work-offline` to `true`.
 
 After packaging with Maven, run with `java -jar target/gtfs-api.jar`.
 
 ## Feed Loading
 
-GTFS feeds will be auto-loaded upon request by feed ID. The best way to get started is to dump a feed 
-into your s3 bucket and navigate to `http://localhost:4567/routes?feed=<FEED-ID>`. (Note: `FEED-ID` 
-will be the zip filename by default with special characters replaced by hyphens, e.g., `trimet_feed.zip` 
-becomes `trimet-feed-zip`.)
+GTFS feeds will be auto-loaded upon request by feed ID. The best way to
+get started is to dump a feed into your s3 bucket and navigate to
+`http://localhost:4567/routes?feed=<FEED-ID>`. (Note: `FEED-ID`
+will be the zip filename by default with special characters replaced by
+hyphens, e.g., `trimet_feed.zip` becomes `trimet-feed-zip`.)
 
 ## GraphQL
 
@@ -29,44 +32,201 @@ or use the [ChromeiQL extension](https://chrome.google.com/webstore/detail/chrom
 
 ### The basics
 
-For the unitiated, GraphQL is a flexible alternative to REST, whereby clients can request only the data elements
-they need. It also permits requests clients to request data that is nested according to relationships between types.
+For the unitiated, GraphQL is a flexible alternative to REST, whereby
+clients can request only the data elements they need. It also permits
+requests clients to request data that is nested according to
+relationships between types.
 
-As an example in the context of GTFS, if we're looking for all of the routes that serve a specific stop,
-we might construct the following query:
+As an example in the context of GTFS, if we're looking for all of the
+patterns (and their stops) that run on a specific route, we might
+construct the following query:
 
 ```
-query routesForStopQuery($feedId: [String], $stopId: [String]) {
-  stops(feed_id: $feedId, stop_id: $stopId) {
-    stop_name
-    stop_id
-    stop_lat
-    stop_lon
-    routes {
+query ($namespace: String, $route_id: String) {
+  feed(namespace: $namespace) {
+    feed_id
+    feed_version
+    filename
+    routes (route_id: [$route_id]) {
       route_id
-      route_short_name
+      route_name
+      route_type
       patterns {
-        name
         pattern_id
+        stops {
+          stop_id
+        }
       }
     }
   }
 }
 ```
 
-The above request specifies a couple of variables (`feedId`, which is always required, and `stopId` for the specific stop(s))
-as well as a list of fields the client would like back (including `stop_name`, `stop_id`, and `stop_lat`). The last item
-at this level in the query is `routes`, which will return all of the routes that serve the containing stop. Underneath routes
-are `patterns`, which in this context means all of the various patterns (unique stop sequences) for that route. We could
-even travel one (or more) level deeper and ask for all of the stops for each pattern.
+The above request specifies a couple of variables (`namespace`, which is
+always required, and `route_id` for the specific route(s)) as well as a
+list of fields the client would like back (including `route_id`,
+`route_name`, and `route_type`). The last item at this level in the query is
+`routes`, which will return all of the routes that serve the containing
+stop. Underneath routes are `patterns`, which in this context means all
+of the various patterns (unique stop sequences) for that route. We then
+travel one more level deeper to ask for all of the stops for
+each pattern.
  
-The various permutations of these fields and types are all documented in [schema.graphql](src/docs/schema.graphql).
-Visiting the root GraphQL endpoint for `gtfs-api` (e.g., [http://localhost:4567](http://localhost:4567)) will return
-the schema for the active version of `gtfs-api`.
+The various permutations of these fields and types are all documented
+in [schema.graphql](src/docs/schema.graphql). Visiting the root GraphQL
+endpoint for `gtfs-api` (e.g., [http://localhost:4567](http://localhost:4567))
+will return the schema for the active version of `gtfs-api`.
 
 ### Sample GraphQL queries
 
-You can find some sample GraphQL queries [here](https://github.com/conveyal/scenario-editor/blob/master/lib/graphql/query.js) or in [examples](src/examples).
+Below are some sample GraphQL queries for fetching GTFS entities and
+load/validation result information for particular GTFS feeds.
+
+When fetching sets of entities or validation errors, a default `limit` of
+`50` (with `offset=0`) is applied to all queries unless otherwise
+specified. Here is a list of additional optional params for each category:
+
+- Validation errors: `namespace`, `error_type`
+- GTFS entities
+ - Routes: `route_id`
+ - Stops: `stop_id`
+ - Trips: `trip_id` and `route_id`
+ - Stop Times: (none)
+ - Services: `service_id`
+
+#### Request a pattern for a feed with its stops and trips (and the trips' stop_times).
+```
+query ($namespace: String, $pattern_id: String) {
+  feed(namespace: $namespace) {
+    feed_id
+    feed_version
+    filename
+    patterns (pattern_id: [$pattern_id]) {
+      pattern_id
+      route_id
+      stops {
+        stop_id
+      }
+      trips {
+        trip_id
+        pattern_id
+        stop_times {
+          stop_id
+          trip_id
+        }
+      }
+    }
+  }
+}
+```
+
+#### Request a route for a feed with its trips.
+```
+query ($namespace: String, $route_id: String) {
+  feed(namespace: $namespace) {
+    feed_id
+    feed_version
+    filename
+    routes (route_id: [$route_id]) {
+      route_id
+      route_type
+      trips {
+        trip_id
+        route_id
+      }
+    }
+  }
+}
+```
+
+#### Request a route for a feed with its patterns and the patterns' trips.
+```
+query ($namespace: String, $route_id: String) {
+  feed(namespace: $namespace) {
+    feed_id
+    feed_version
+    filename
+    routes (route_id: [$route_id]) {
+      route_id
+      route_type
+      patterns {
+        pattern_id
+        route_id
+        trips {
+          trip_id
+          pattern_id
+        }
+      }
+    }
+  }
+}
+```
+
+### Request all routes for a feed.
+```
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_id
+    feed_version
+    filename
+    routes {
+      route_id
+      route_type
+    }
+  }
+}
+```
+
+### Request validation errors
+Note: a list of the validation error types and their English language
+descriptions can be found in the [`NewGtfsErrorType.java`](https://github.com/conveyal/gtfs-lib/blob/master/src/main/java/com/conveyal/gtfs/error/NewGTFSErrorType.java)
+class in [conveyal/gtfs-lib](https://github.com/conveyal/gtfs-lib).
+```
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_id
+    feed_version
+    filename
+    ## Optional params for errors are namespace, error_type, limit, and offset
+    errors {
+      error_id
+      error_type
+      entity_type
+      line_number
+      entity_id
+      entity_sequence
+      bad_value
+    }
+  }
+}
+```
+
+### Request validation errors
+Note: a list of the validation error types and their English language
+descriptions can be found in the [`NewGtfsErrorType.java`](https://github.com/conveyal/gtfs-lib/blob/master/src/main/java/com/conveyal/gtfs/error/NewGTFSErrorType.java)
+class in [conveyal/gtfs-lib](https://github.com/conveyal/gtfs-lib).
+```
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_id
+    feed_version
+    filename
+    row_counts {
+      stops
+      stop_times
+      trips
+      routes
+      calendar
+      calendar_dates
+      errors
+    }
+    error_counts {
+      type
+    	count
+    }
+  }
+}
+```
 
 ## REST Endpoints
 

@@ -1,5 +1,6 @@
 package com.conveyal.gtfs.api.graphql.types;
 
+import com.conveyal.gtfs.api.graphql.GraphQLGtfsSchema;
 import com.conveyal.gtfs.api.graphql.fetchers.TripDataFetcher;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeReference;
@@ -9,9 +10,9 @@ import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
 
 /**
- * Created by landon on 10/3/16.
+ * Factory to create a GraphQL type for GTFS stop_times.
  */
-public class StopTimeType {
+public abstract class StopTimeType {
     public static GraphQLObjectType build () {
         return newObject()
                 .name("stopTime")
@@ -24,7 +25,7 @@ public class StopTimeType {
                 .field(feed())
                 .field(newFieldDefinition()
                         .name("trip")
-                        .type(new GraphQLTypeReference("trip"))
+                        .type(GraphQLGtfsSchema.tripType)
                         .dataFetcher(TripDataFetcher::fromStopTime)
                         .argument(stringArg("date"))
                         .argument(longArg("from"))

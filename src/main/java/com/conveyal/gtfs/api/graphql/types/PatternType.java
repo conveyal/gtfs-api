@@ -1,5 +1,6 @@
 package com.conveyal.gtfs.api.graphql.types;
 
+import com.conveyal.gtfs.api.graphql.GraphQLGtfsSchema;
 import com.conveyal.gtfs.api.graphql.fetchers.RouteFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.StatFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.StopFetcher;
@@ -15,9 +16,10 @@ import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
 import static graphql.schema.GraphQLObjectType.newObject;
 
 /**
- * Created by landon on 10/3/16.
+ * Factory to create a GraphQL type for GTFS patterns (which are not part of GTFS, they are like
+ * Transmodel JourneyPatterns).
  */
-public class PatternType {
+public abstract class PatternType {
     public static GraphQLObjectType build () {
         GraphQLObjectType patternStats = newObject()
                 .name("patternStats")

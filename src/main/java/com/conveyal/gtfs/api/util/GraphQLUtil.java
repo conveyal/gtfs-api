@@ -3,12 +3,8 @@ package com.conveyal.gtfs.api.util;
 import com.conveyal.gtfs.api.graphql.GeoJsonCoercing;
 import com.conveyal.gtfs.api.graphql.WrappedEntityFieldFetcher;
 import com.conveyal.gtfs.api.graphql.fetchers.FeedFetcher;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLScalarType;
-import graphql.schema.GraphQLTypeReference;
+import com.conveyal.gtfs.api.graphql.fetchers.MapFetcher;
+import graphql.schema.*;
 
 import static graphql.Scalars.*;
 import static graphql.schema.GraphQLArgument.newArgument;
@@ -81,6 +77,13 @@ public class GraphQLUtil {
         return newArgument()
                 .name(name)
                 .type(GraphQLLong)
+                .build();
+    }
+
+    public static GraphQLArgument intArg (String name) {
+        return newArgument()
+                .name(name)
+                .type(GraphQLInt)
                 .build();
     }
 
