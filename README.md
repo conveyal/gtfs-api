@@ -201,7 +201,7 @@ query ($namespace: String) {
 }
 ```
 
-### Request validation errors
+### Request tables and errors count
 Note: a list of the validation error types and their English language
 descriptions can be found in the [`NewGtfsErrorType.java`](https://github.com/conveyal/gtfs-lib/blob/master/src/main/java/com/conveyal/gtfs/error/NewGTFSErrorType.java)
 class in [conveyal/gtfs-lib](https://github.com/conveyal/gtfs-lib).
@@ -222,7 +222,7 @@ query ($namespace: String) {
     }
     error_counts {
       type
-    	count
+      count
     }
   }
 }
