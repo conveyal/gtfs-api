@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.api.graphql.fetchers;
 
 import com.conveyal.gtfs.api.ApiMain;
+import com.conveyal.gtfs.api.GraphQLMain;
 import com.conveyal.gtfs.api.graphql.WrappedGTFSEntity;
 import com.conveyal.gtfs.api.models.FeedSource;
 import com.conveyal.gtfs.api.util.GeomUtil;
@@ -10,12 +11,20 @@ import com.conveyal.gtfs.model.Stop;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import graphql.schema.DataFetchingEnvironment;
+
+import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -111,6 +120,74 @@ public class StopFetcher {
         }
 
         return stops;
+    }
+
+    public static Integer fromRouteCount(DataFetchingEnvironment environment) {
+        Map<String, Object> parentFeedMap = environment.getSource();
+        String namespace = (String) parentFeedMap.get("namespace");
+        String route_id = (String) parentFeedMap.get("route_id");
+        Connection connection = null;
+        Integer count = null;
+        try {
+            connection = GraphQLMain.dataSource.getConnection();
+            connection.setSchema(namespace);
+            Statement statement = connection.createStatement();
+            String sql = String.format("select count(distinct stop_id) " +
+              "from pattern_stops ps " +
+              "join patterns p on p.route_id = p.route_id " +
+              "where p.route_id = '%s'", route_id);
+            if (statement.execute(sql)) {
+                ResultSet resultSet = statement.getResultSet();
+                resultSet.next();
+                count = resultSet.getInt(1);
+            }
+        } catch (SQLException e) {
+	        throw new RuntimeException(e);
+	    } finally {
+	        DbUtils.closeQuietly(connection);
+	    }
+        return count;
+    }
+
+    public static List<Map<String, Object>> fromRoute(DataFetchingEnvironment environment) {
+        // This will contain one Map<String, Object> for each row fetched from the sql resulset.
+        List<Map<String, Object>> results = new ArrayList<>();
+        Map<String, Object> parentFeedMap = environment.getSource();
+        String namespace = (String) parentFeedMap.get("namespace");
+        String route_id = (String) parentFeedMap.get("route_id");
+        Connection connection = null;
+        try {
+            connection = GraphQLMain.dataSource.getConnection();
+            connection.setSchema(namespace);
+            Statement statement = connection.createStatement();
+            String sql = String.format(
+              "select distinct s.* " +
+              "from stops s " +
+              "join pattern_stops ps on s.stop_id = ps.stop_id " +
+              "join patterns p on ps.pattern_id = p.pattern_id " +
+              "where p.route_id = '%s'", route_id);
+            if (statement.execute(sql)) {
+                ResultSet resultSet = statement.getResultSet();
+                ResultSetMetaData meta = resultSet.getMetaData();
+                int nColumns = meta.getColumnCount();
+                // Iterate over result rows
+                while (resultSet.next()) {
+                    // Create a Map to hold the contents of this row, injecting the stop into every map
+                    Map<String, Object> resultMap = new HashMap<>();
+                    resultMap.put("namespace", namespace);
+                    for (int i = 1; i < nColumns; i++) {
+                        resultMap.put(meta.getColumnName(i), resultSet.getObject(i));
+                    }
+                    results.add(resultMap);
+                }
+            }
+        } catch (SQLException e) {
+	        throw new RuntimeException(e);
+	    } finally {
+	        DbUtils.closeQuietly(connection);
+	    }
+        // Return a List of Maps, one Map for each row in the result.
+        return results;
     }
 
     public static List<WrappedGTFSEntity<Stop>> fromPattern(DataFetchingEnvironment environment) {
