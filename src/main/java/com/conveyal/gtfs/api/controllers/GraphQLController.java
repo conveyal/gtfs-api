@@ -50,14 +50,15 @@ public class GraphQLController {
      */
     public static Object post (Request req, Response response) {
         JsonNode node = null;
+        String vars = null;
         try {
             node = mapper.readTree(req.body());
+            vars = mapper.writeValueAsString(node.get("variables")) ;
         } catch (IOException e) {
             LOG.warn("Error processing POST body JSON", e);
             halt(400, "Malformed JSON");
         }
         // FIXME converting String to JSON nodes and back to string, then re-parsing to Map.
-        String vars = (node.get("variables") != null) ? node.get("variables").asText() : "null";
         String query = node.get("query").asText();
         return doQuery(vars, query, response);
     }
