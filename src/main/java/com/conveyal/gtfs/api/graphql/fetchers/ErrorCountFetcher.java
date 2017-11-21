@@ -65,10 +65,12 @@ public class ErrorCountFetcher implements DataFetcher {
     public static class ErrorCount {
         public NewGTFSErrorType type;
         public int count;
+        public String message;
 
         public ErrorCount(NewGTFSErrorType errorType, int count) {
             this.type = errorType;
             this.count = count;
+            this.message = errorType.englishMessage;
         }
     }
 

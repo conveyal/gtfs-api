@@ -199,6 +199,7 @@ public class GraphQLGtfsSchema {
             .description("Quantity of validation errors of a specific type.")
             .field(string("type"))
             .field(intt("count"))
+            .field(string("message"))
             .build();
 
 

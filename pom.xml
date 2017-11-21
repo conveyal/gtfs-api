@@ -133,7 +133,7 @@
         <dependency>
             <groupId>com.conveyal</groupId>
             <artifactId>gtfs-lib</artifactId>
-            <version>3.1.0</version>
+            <version>3.2.0-SNAPSHOT</version>
         </dependency>
 
         <!-- the core, which includes Streaming API, shared low-level abstractions (but NOT data-binding) -->
