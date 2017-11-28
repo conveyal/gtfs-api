@@ -170,7 +170,8 @@ public class JDBCFetcher implements DataFetcher<List<Map<String, Object>>> {
         return results;
     }
 
-    private String makeInClause(String key, List<String> strings) {
+    // FIXME move these 3 methods to an utility class
+    protected static String makeInClause(String key, List<String> strings) {
         StringBuilder sb = new StringBuilder();
         sb.append(key);
         if (strings.size() == 1) {
@@ -188,13 +189,13 @@ public class JDBCFetcher implements DataFetcher<List<Map<String, Object>>> {
     }
 
     // TODO SQL sanitization to avoid injection
-    private void quote(StringBuilder sb, String string) {
+    protected static void quote(StringBuilder sb, String string) {
         sb.append("'");
         sb.append(string);
         sb.append("'");
     }
 
-    private String quote (String string) {
+    protected static String quote (String string) {
         StringBuilder sb = new StringBuilder();
         quote(sb, string);
         return sb.toString();
