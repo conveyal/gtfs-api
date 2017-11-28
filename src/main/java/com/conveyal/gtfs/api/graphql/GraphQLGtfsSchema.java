@@ -148,7 +148,6 @@ public class GraphQLGtfsSchema {
 		            .name("stop_count")
 		            .description("The number of stops served by the route's patterns")
 		            .type(GraphQLInt)
-		            .dataFetcher(new RowCountFilteredFetcher("patterns", "route_id"))
 		            .dataFetcher(StopFetcher::fromRouteCount)
 		            .build()
             )
