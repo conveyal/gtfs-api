@@ -71,33 +71,6 @@ public class StopsController {
             else
                 halt(404, "Stop " + req.params("id") + " not found");
         }
-        // bounding box
-        else if (req.queryParams("max_lat") != null && req.queryParams("max_lon") != null && req.queryParams("min_lat") != null && req.queryParams("min_lon") != null){
-            stops = new HashSet<>();
-            Coordinate maxCoordinate = new Coordinate(Double.valueOf(req.queryParams("max_lon")), Double.valueOf(req.queryParams("max_lat")));
-            Coordinate minCoordinate = new Coordinate(Double.valueOf(req.queryParams("min_lon")), Double.valueOf(req.queryParams("min_lat")));
-            Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
-
-            for (FeedSource feedSource : feeds) {
-                List<Stop> searchResults = feedSource.stopIndex.query(searchEnvelope);
-                stops.addAll(searchResults);
-            }
-            return limitStops(req, stops);
-        }
-        // lat lon + radius
-        else if (req.queryParams("lat") != null && req.queryParams("lon") != null){
-            stops = new HashSet<>();
-            Coordinate latLon = new Coordinate(Double.valueOf(req.queryParams("lon")), Double.valueOf(req.queryParams("lat")));
-            if (req.queryParams("radius") != null){
-                StopsController.radius = Double.valueOf(req.queryParams("radius"));
-            }
-            Envelope searchEnvelope = GeomUtil.getBoundingBox(latLon, radius);
-            for (FeedSource feedSource : feeds) {
-                List<Stop> searchResults = feedSource.stopIndex.query(searchEnvelope);
-                stops.addAll(searchResults);
-            }
-            return limitStops(req, stops);
-        }
         // query name
         else if (req.queryParams("name") != null){
             stops = new HashSet<>();

@@ -75,39 +75,6 @@ public class StopFetcher {
                         .map(stop -> new WrappedGTFSEntity(fs.id, stop))
                         .forEach(stops::add);
             }
-            else {
-                // get stops by lat/lon/radius
-                if (argumentDefined(env, "lat") && argumentDefined(env, "lon")) {
-                    Double lat = (Double) args.get("lat");
-                    Double lon = (Double) args.get("lon");
-                    Double radius = args.get("radius") == null ? DEFAULT_RADIUS : (Double) args.get("radius");
-                    Coordinate latLng = new Coordinate(lon, lat);
-                    Envelope searchEnvelope = GeomUtil.getBoundingBox(latLng, radius);
-
-                    List<Stop> results = fs.stopIndex.query(searchEnvelope);
-                    results.stream()
-                            .map(s -> new WrappedGTFSEntity(fs.id, s))
-                            .forEach(stops::add);
-                }
-                // get stops by bounding box
-                else if (argumentDefined(env, "min_lat") && argumentDefined(env, "max_lat") &&
-                        argumentDefined(env, "min_lon") && argumentDefined(env, "max_lon")) {
-                    Coordinate maxCoordinate = new Coordinate((Double) args.get("max_lon"), (Double) args.get("max_lat"));
-                    Coordinate minCoordinate = new Coordinate((Double) args.get("min_lon"), (Double) args.get("min_lat"));
-                    Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
-
-                    List<Stop> results = fs.stopIndex.query(searchEnvelope);
-                    results.stream()
-                            .map(s -> new WrappedGTFSEntity(fs.id, s))
-                            .forEach(stops::add);
-                }
-                // get all
-                else {
-                    fs.feed.stops.values().stream()
-                            .map(s -> new WrappedGTFSEntity(fs.id, s))
-                            .forEach(stops::add);
-                }
-            }
         }
 
         return stops;
@@ -161,16 +128,6 @@ public class StopFetcher {
                     .map(s -> new WrappedGTFSEntity<>(fs.id, s))
                     .collect(Collectors.toList());
         }
-        // check for bbox query
-        if(argumentDefined(env, "min_lat") && argumentDefined(env, "max_lat") &&
-                argumentDefined(env, "min_lon") && argumentDefined(env, "max_lon")) {
-            System.out.println("min_lat, etc. present " + env.getArgument("min_lat"));
-            Coordinate maxCoordinate = new Coordinate(env.getArgument("max_lon"), env.getArgument("max_lat"));
-            Coordinate minCoordinate = new Coordinate(env.getArgument("min_lon"), env.getArgument("min_lat"));
-            Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
-            stops = fs.stopIndex.query(searchEnvelope);
-        }
-
         return stops.stream()
                 .map(s -> new WrappedGTFSEntity<>(fs.id, s))
                 .collect(Collectors.toList());
@@ -182,16 +139,6 @@ public class StopFetcher {
         if (fs == null) return null;
 
         Collection<Stop> stops = fs.feed.stops.values();
-
-        // check for bbox query
-        if(argumentDefined(env, "min_lat") && argumentDefined(env, "max_lat") &&
-                argumentDefined(env, "min_lon") && argumentDefined(env, "max_lon")) {
-            System.out.println("min_lat, etc. present " + env.getArgument("min_lat"));
-            Coordinate maxCoordinate = new Coordinate(env.getArgument("max_lon"), env.getArgument("max_lat"));
-            Coordinate minCoordinate = new Coordinate(env.getArgument("min_lon"), env.getArgument("min_lat"));
-            Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
-            stops = fs.stopIndex.query(searchEnvelope);
-        }
 
         return stops.stream().count();
     }
