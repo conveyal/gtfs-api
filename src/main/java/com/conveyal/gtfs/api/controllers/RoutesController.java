@@ -68,32 +68,7 @@ public class RoutesController {
             else
                 halt(404, "Route " + req.params("id") + " not found");
         }
-        // bounding box
-        else if (req.queryParams("max_lat") != null && req.queryParams("max_lon") != null && req.queryParams("min_lat") != null && req.queryParams("min_lon") != null){
-            Coordinate maxCoordinate = new Coordinate(Double.valueOf(req.queryParams("max_lon")), Double.valueOf(req.queryParams("max_lat")));
-            Coordinate minCoordinate = new Coordinate(Double.valueOf(req.queryParams("min_lon")), Double.valueOf(req.queryParams("min_lat")));
-            Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
-            for (FeedSource feedSource : feeds) {
-                // TODO: these are actually patterns being returned, NOT routes
-                List<Route> searchResults = feedSource.routeIndex.query(searchEnvelope);
-                routes.addAll(searchResults);
-            }
-            return routes;
-        }
-        // lat lon + radius
-        else if (req.queryParams("lat") != null && req.queryParams("lon") != null){
-            Coordinate latLon = new Coordinate(Double.valueOf(req.queryParams("lon")), Double.valueOf(req.queryParams("lat")));
-            if (req.queryParams("radius") != null){
-                RoutesController.radius = Double.valueOf(req.queryParams("radius"));
-            }
-            Envelope searchEnvelope = GeomUtil.getBoundingBox(latLon, radius);
 
-            for (FeedSource feedSource : feeds) {
-                List<Route> searchResults = feedSource.routeIndex.query(searchEnvelope);
-                routes.addAll(searchResults);
-            }
-            return routes;
-        }
         else if (req.queryParams("name") != null){
             LOG.info(req.queryParams("name"));
 

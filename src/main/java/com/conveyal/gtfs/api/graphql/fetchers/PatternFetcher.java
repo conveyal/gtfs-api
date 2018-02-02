@@ -47,32 +47,6 @@ public class PatternFetcher {
                         .map(pattern -> new WrappedGTFSEntity(fs.id, pattern))
                         .forEach(patterns::add);
             }
-            // get patterns by lat/lon/radius
-            else if (argumentDefined(env, "lat") && argumentDefined(env, "lon")) {
-                Double lat = (Double) args.get("lat");
-                Double lon = (Double) args.get("lon");
-                Double radius = args.get("radius") == null ? DEFAULT_RADIUS : (Double) args.get("radius");
-                Coordinate latLng = new Coordinate(lon, lat);
-                Envelope searchEnvelope = GeomUtil.getBoundingBox(latLng, radius);
-
-                List<Pattern> results = fs.routeIndex.query(searchEnvelope);
-                results.stream()
-                        .map(pattern -> new WrappedGTFSEntity(fs.id, pattern))
-                        .forEach(patterns::add);
-            }
-            // get patterns by bounding box
-            else if (argumentDefined(env, "min_lat") && argumentDefined(env, "max_lat") &&
-                    argumentDefined(env, "min_lon") && argumentDefined(env, "max_lon")) {
-                Coordinate maxCoordinate = new Coordinate((Double) args.get("max_lon"), (Double) args.get("max_lat"));
-                Coordinate minCoordinate = new Coordinate((Double) args.get("min_lon"), (Double) args.get("min_lat"));
-                Envelope searchEnvelope = new Envelope(maxCoordinate, minCoordinate);
-
-                List<Pattern> results = (List<Pattern>) fs.routeIndex.query(searchEnvelope);
-                results.stream()
-                        .filter(p -> p != null)
-                        .map(pattern -> new WrappedGTFSEntity(fs.id, pattern))
-                        .forEach(patterns::add);
-            }
         }
 
         return patterns;
