@@ -25,8 +25,6 @@ import java.util.Set;
 public class FeedSource {
     private static final Logger LOG = LoggerFactory.getLogger(FeedSource.class);
 
-    public STRtree routeIndex;
-    public STRtree stopIndex;
     public SuffixTree<Stop> stopTree;
     public SuffixTree<Route> routeTree;
     public GTFSFeed feed;
@@ -53,24 +51,7 @@ public class FeedSource {
     }
     public void initIndexes(){
         // Initialize and build route radix tree and spatial index
-        this.routeIndex = new STRtree();
         this.routeTree = new ConcurrentSuffixTree<Route>( new DefaultCharArrayNodeFactory() ) {};
-
-        // init spatial index
-        Set<String> indexedRoutes = new HashSet<>();
-        this.feed.patterns.values().stream()
-                .forEach(pattern -> {
-                    if (pattern.geometry == null) {
-                        LOG.warn("Pattern {} in feed {} has no geometry. It will not be included in indices. It has {} stops, if this is less than 2 this message is expected.",
-                                pattern.pattern_id, feed.feedId, pattern.orderedStops.size());
-                    }
-                    else if (!indexedRoutes.contains(pattern.route_id)) {
-                        Envelope routeEnvelope = pattern.geometry.getEnvelopeInternal();
-                        this.routeIndex.insert(routeEnvelope, pattern);
-                        indexedRoutes.add(pattern.route_id);
-                    }
-                });
-        this.routeIndex.build();
 
         // init string index
         for (Route route : this.feed.routes.values()){
@@ -83,13 +64,8 @@ public class FeedSource {
         }
 
         // Initialize and build stop radix tree and spatial index
-        this.stopIndex = new STRtree();
         this.stopTree = new ConcurrentSuffixTree<>( new DefaultCharArrayNodeFactory() );
         for (Stop stop : this.feed.stops.values()){
-            // spatial index
-            Coordinate stopCoords = new Coordinate(stop.stop_lon, stop.stop_lat);
-            Envelope stopEnvelope = new Envelope(stopCoords);
-            this.stopIndex.insert(stopEnvelope, stop);
 
             // add name string to stopTree
             String stopName = "";
@@ -117,13 +93,7 @@ public class FeedSource {
                 this.stopTree.put(stop_code.toUpperCase(), stop);
             }
         }
-        this.stopIndex.build();
 
         // TODO: what happens if new stops or routes need to be added to index (QuadTree)?
-
-        // Print out stop tree results
-//        PrettyPrinter.prettyPrint((PrettyPrintable) stopTree, System.out);
-
-
     }
 }
