@@ -50,22 +50,25 @@ public class GraphQLController {
      */
     public static Object post (Request req, Response response) {
         JsonNode node = null;
+        String vars = null;
         try {
             node = mapper.readTree(req.body());
+            vars = mapper.writeValueAsString(node.get("variables")) ;
         } catch (IOException e) {
             LOG.warn("Error processing POST body JSON", e);
             halt(400, "Malformed JSON");
         }
         // FIXME converting String to JSON nodes and back to string, then re-parsing to Map.
-        String vars = node.get("variables").asText();
         String query = node.get("query").asText();
         return doQuery(vars, query, response);
     }
 
     private static Object doQuery (String varsJson, String queryJson, Response response) {
         long startTime = System.currentTimeMillis();
-        if (varsJson == null && queryJson == null) {
-            return GRAPHQL.execute(IntrospectionQuery.INTROSPECTION_QUERY).getData();
+        if ((varsJson == null && queryJson == null)
+                //a slightly different IntrospectionQuery is sent by GraphiQL itself
+            || (queryJson.indexOf("IntrospectionQuery")>0)) {
+            return GRAPHQL.execute(IntrospectionQuery.INTROSPECTION_QUERY);
         }
         try {
             Map<String, Object> variables = mapper.readValue(varsJson, new TypeReference<Map<String, Object>>(){});
