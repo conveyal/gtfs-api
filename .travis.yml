@@ -10,6 +10,8 @@ script: |
     # otherwise, just run test suite
     mvn clean verify
   fi
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 env:
   global:
   - secure: "Qc6DiwXJHojwps7poByHdLGeybLF8NwqO+6LjY3Bwx1seUqeGVyeFD98y/sH0mjuEvBxhfA8MBAK2BhyjqtSqxgZWQeeUkf7GFlRnqwmJQvyG86ae/aapdIamfAAIog9HsqTSo8RYCYVTiKzAlLGorAC0KJwc525+IrxDeZx2hJThdPZpMmgybo53leaqB3z60yG04NZB2wOA3Fi+LmKGZvPbyO0wL1pCz04+WVXvBpuhOkSUEd/VwtVbFP0tEUBpXk8pgaSDmNqH7x0m9PapY3KOBbjVfwhRsD/nIAjZL5dyD3U8mOhXMY5Cv3ItW+taYpuH9AbmYJEUSvaf3r+qnYJ1ebm3cNRbwWnWm5Gjl65YmKa4K5RD2eu4VFn+H/bA56YLLANbQC3gGYx8WbGzeCr6uAQWaU5KTWbeiU9/oEVKK2SCBgkO4xNC14lWRVPzDRS9+FICbFsWXCHZEbcE2RgvUezSxe4kv2UJbjPbH7TqZB+2F0WOkc3DFqbBVcbeGr8CrapuFmnA/P7EN8zsoDY4uaV0D5hcwnAP04iQeRS3JJKJ61oDJLb0VuO5+mtUrZQQDg+LUWWmRJMJx4+kVVTnxhcL874MT056KwICrrB/kTu/UBM1Me7PaIYdV6VafcMe/BGQQLddugoUpVtEioeKKoRMPkeXReAwsDjAZY="
