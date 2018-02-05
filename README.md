@@ -1,5 +1,7 @@
 # gtfs-api [![Build Status](https://travis-ci.org/conveyal/gtfs-api.svg?branch=master)](https://travis-ci.org/conveyal/gtfs-api)
 
+# NOTE this project is no longer maintained or used by Conveyal. The API definition has been merged into gtfs-lib. This documentation should be copied over to the projects where APIs are defined.
+
 Simple spark rest api using [gtfs-lib](https://github.com/conveyal/gtfs-lib).
 
 Build with `mvn clean package`.
