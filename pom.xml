@@ -7,7 +7,7 @@
     <!-- gtfs-api release 1.0.0 uses gtfs-lib 3.0.0 which has RDBMS support, but still provides the API on top of old MapDB storage. -->
     <groupId>com.conveyal</groupId>
     <artifactId>gtfs-api</artifactId>
-    <version>3.1.3-SNAPSHOT</version>
+    <version>3.1.3</version>
 
     <!-- Define where the source code for this project lives -->
     <scm>
