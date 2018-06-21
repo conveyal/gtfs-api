@@ -99,7 +99,7 @@
         <repository>
             <id>conveyal</id>
             <name>conveyal</name>
-            <url>https://maven.conveyal.com</url>
+            <url>https://oss.sonatype.org/content/repositories/releases/</url>
         </repository>
         <repository>
             <id>osgeo</id>
