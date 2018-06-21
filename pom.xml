@@ -99,6 +99,11 @@
         <repository>
             <id>conveyal</id>
             <name>conveyal</name>
+            <url>https://maven.conveyal.com</url>
+        </repository>
+        <repository>
+            <id>conveyal-ossrh</id>
+            <name>releases on sonatype, which may not yet have been synced with central</name>
             <url>https://oss.sonatype.org/content/repositories/releases/</url>
         </repository>
         <repository>
