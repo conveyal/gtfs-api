@@ -19,6 +19,10 @@ public class FeedSourceCache extends BaseGTFSCache<FeedSource> {
         super(bucket, bucketFolder, cacheDir);
     }
 
+    public FeedSourceCache(String awsRegion, String bucket, String bucketFolder, File cacheDir) {
+        super(awsRegion, bucket, bucketFolder, cacheDir);
+    }
+
     @Override
     protected FeedSource processFeed(GTFSFeed feed) {
         return new FeedSource(feed);

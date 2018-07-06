@@ -45,13 +45,14 @@ public class ApiMain {
         Routes.routes("api");
     }
 
-    public static FeedSourceCache initialize (String feedBucket, String dataDirectory) {
-        return initialize(feedBucket, null, dataDirectory);
+    public static FeedSourceCache initialize (String awsRegion, String feedBucket, String dataDirectory) {
+        return initialize(awsRegion, feedBucket, null, dataDirectory);
     }
 
     /** Set up the GTFS API. If bundleBucket is null, S3 will not be used */
-    public static FeedSourceCache initialize (String feedBucket, String bucketFolder, String dataDirectory) {
-        cache = new FeedSourceCache(feedBucket, bucketFolder, new File(dataDirectory));
+    public static FeedSourceCache initialize (String awsRegion, String feedBucket, String bucketFolder, String
+            dataDirectory) {
+        cache = new FeedSourceCache(awsRegion, feedBucket, bucketFolder, new File(dataDirectory));
         return cache;
     }
 
